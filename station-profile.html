@@ -18,6 +18,7 @@
       color: #222;
     }
 
+    /* HEADER */
     .header {
       background: #1464f4;
       color: white;
@@ -37,36 +38,22 @@
     .header p {
       margin: 5px 0 0;
       opacity: 0.9;
+      font-size: 14px;
     }
 
+    /* CONTAINER */
     .container {
       max-width: 900px;
       margin: auto;
       padding: 20px;
     }
 
+    /* TOPBAR */
     .topbar {
       margin-bottom: 20px;
     }
 
-    button {
-      border: none;
-      border-radius: 10px;
-      padding: 12px 16px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    .primary {
-      background: #1464f4;
-      color: white;
-    }
-
-    .secondary {
-      background: #e9edf2;
-      color: #222;
-    }
-
+    /* CARD */
     .card {
       background: white;
       border-radius: 16px;
@@ -74,6 +61,11 @@
       box-shadow: 0 4px 15px rgba(0,0,0,0.06);
     }
 
+    .card h2 {
+      margin-top: 0;
+    }
+
+    /* FORM */
     .form-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -98,6 +90,12 @@
       border-radius: 10px;
       font-size: 15px;
       font-family: Arial, sans-serif;
+      outline: none;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: #1464f4;
     }
 
     textarea {
@@ -105,12 +103,34 @@
       resize: vertical;
     }
 
+    /* BUTTON */
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 12px 16px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .primary {
+      background: #1464f4;
+      color: white;
+    }
+
+    .secondary {
+      background: #e9edf2;
+      color: #222;
+    }
+
     .actions {
       margin-top: 20px;
       display: flex;
       gap: 10px;
+      flex-wrap: wrap;
     }
 
+    /* LOADING */
     .loading {
       text-align: center;
       padding: 50px;
@@ -120,6 +140,7 @@
       display: none;
     }
 
+    /* MESSAGE */
     .message {
       margin-top: 15px;
       padding: 12px;
@@ -137,6 +158,7 @@
       color: #b00020;
     }
 
+    /* MOBILE */
     @media (max-width: 600px) {
 
       .container {
@@ -165,13 +187,18 @@
 
 <body>
 
+
+  <!-- LOADING -->
   <div id="loading" class="loading">
     Memeriksa akses admin...
   </div>
 
 
+  <!-- HALAMAN ADMIN -->
   <div id="page">
 
+
+    <!-- HEADER -->
     <header class="header">
 
       <div class="header-content">
@@ -189,11 +216,15 @@
     </header>
 
 
+    <!-- CONTENT -->
     <main class="container">
 
+
+      <!-- TOMBOL KEMBALI -->
       <div class="topbar">
 
         <button
+          type="button"
           class="secondary"
           onclick="window.location.href='admin.html'">
 
@@ -204,6 +235,7 @@
       </div>
 
 
+      <!-- FORM CARD -->
       <div class="card">
 
         <h2>
@@ -211,16 +243,18 @@
         </h2>
 
         <p>
-          Ubah informasi profil stasiun melalui formulir berikut.
+          Kelola informasi Profil Stasiun Gombong.
         </p>
 
 
+        <!-- FORM -->
         <form id="profileForm">
+
 
           <div class="form-grid">
 
 
-            <!-- NAMA -->
+            <!-- 1. NAMA STASIUN -->
             <div>
 
               <label for="name">
@@ -229,13 +263,15 @@
 
               <input
                 id="name"
+                name="name"
                 type="text"
+                placeholder="Contoh: Stasiun Gombong"
                 required>
 
             </div>
 
 
-            <!-- KELAS -->
+            <!-- 2. KELAS STASIUN -->
             <div>
 
               <label for="stationClass">
@@ -244,13 +280,15 @@
 
               <input
                 id="stationClass"
+                name="stationClass"
                 type="text"
+                placeholder="Contoh: Kelas 1"
                 required>
 
             </div>
 
 
-            <!-- KODE -->
+            <!-- 3. KODE STASIUN -->
             <div>
 
               <label for="code">
@@ -259,13 +297,15 @@
 
               <input
                 id="code"
+                name="code"
                 type="text"
+                placeholder="Contoh: GOM"
                 required>
 
             </div>
 
 
-            <!-- JAM -->
+            <!-- 4. JAM OPERASIONAL -->
             <div>
 
               <label for="operatingHours">
@@ -274,12 +314,14 @@
 
               <input
                 id="operatingHours"
-                type="text">
+                name="operatingHours"
+                type="text"
+                placeholder="Contoh: 24 Jam">
 
             </div>
 
 
-            <!-- ALAMAT -->
+            <!-- 5. ALAMAT -->
             <div class="full">
 
               <label for="address">
@@ -288,12 +330,14 @@
 
               <textarea
                 id="address"
+                name="address"
+                placeholder="Masukkan alamat lengkap stasiun"
                 required></textarea>
 
             </div>
 
 
-            <!-- DESKRIPSI -->
+            <!-- 6. DESKRIPSI -->
             <div class="full">
 
               <label for="description">
@@ -302,12 +346,14 @@
 
               <textarea
                 id="description"
+                name="description"
+                placeholder="Masukkan deskripsi Stasiun Gombong"
                 required></textarea>
 
             </div>
 
 
-            <!-- TELEPON -->
+            <!-- 7. NOMOR TELEPON -->
             <div>
 
               <label for="phone">
@@ -316,7 +362,9 @@
 
               <input
                 id="phone"
-                type="text">
+                name="phone"
+                type="text"
+                placeholder="Contoh: 0287xxxxxxx">
 
             </div>
 
@@ -324,6 +372,7 @@
           </div>
 
 
+          <!-- ACTION BUTTON -->
           <div class="actions">
 
             <button
@@ -347,10 +396,12 @@
           </div>
 
 
+          <!-- MESSAGE -->
           <div
             id="message"
             class="message">
           </div>
+
 
         </form>
 
@@ -365,18 +416,25 @@
   <script src="firebase-config.js"></script>
 
 
-  <!-- FIREBASE SDK -->
+  <!-- FIREBASE APP -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 
+
+  <!-- FIREBASE AUTH -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
+
+  <!-- FIREBASE FIRESTORE -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 
   <script>
 
+
     /*
+     * ==============================
      * FIREBASE
+     * ==============================
      */
 
     firebase.initializeApp(firebaseConfig);
@@ -387,36 +445,19 @@
 
 
     /*
-     * CEK ADMIN
+     * ==============================
+     * CEK LOGIN ADMIN
+     * ==============================
      */
 
-    auth.onAuthStateChanged(async function(user) {
+    auth.onAuthStateChanged(
+      async function(user) {
 
-      if (!user) {
+        /*
+         * Jika belum login
+         */
 
-        window.location.href =
-          "admin-login.html";
-
-        return;
-
-      }
-
-
-      try {
-
-        const adminDoc =
-          await db
-            .collection("admins")
-            .doc(user.uid)
-            .get();
-
-
-        if (
-          !adminDoc.exists ||
-          adminDoc.data().role !== "admin"
-        ) {
-
-          await auth.signOut();
+        if (!user) {
 
           window.location.href =
             "admin-login.html";
@@ -426,55 +467,133 @@
         }
 
 
-        document.getElementById(
-          "loading"
-        ).style.display = "none";
+        try {
+
+          /*
+           * Ambil data admin
+           */
+
+          const adminDoc =
+            await db
+              .collection("admins")
+              .doc(user.uid)
+              .get();
 
 
-        document.getElementById(
-          "page"
-        ).style.display = "block";
+          /*
+           * Pastikan admin terdaftar
+           */
+
+          if (!adminDoc.exists) {
+
+            await auth.signOut();
+
+            window.location.href =
+              "admin-login.html";
+
+            return;
+
+          }
 
 
-        loadProfile();
+          /*
+           * Ambil role
+           */
+
+          const adminData =
+            adminDoc.data();
 
 
-      } catch (error) {
+          /*
+           * Pastikan role admin
+           */
 
-        console.error(error);
+          if (
+            adminData.role !== "admin"
+          ) {
 
-        await auth.signOut();
+            await auth.signOut();
 
-        window.location.href =
-          "admin-login.html";
+            window.location.href =
+              "admin-login.html";
+
+            return;
+
+          }
+
+
+          /*
+           * Tampilkan halaman
+           */
+
+          document.getElementById(
+            "loading"
+          ).style.display = "none";
+
+
+          document.getElementById(
+            "page"
+          ).style.display = "block";
+
+
+          /*
+           * Muat data profil
+           */
+
+          loadProfile();
+
+
+        } catch (error) {
+
+          console.error(error);
+
+          await auth.signOut();
+
+          window.location.href =
+            "admin-login.html";
+
+        }
 
       }
-
-    });
+    );
 
 
     /*
-     * LOAD PROFIL
+     * ==============================
+     * LOAD PROFILE
+     * ==============================
      */
 
     async function loadProfile() {
 
       try {
 
+        /*
+         * Bersihkan pesan
+         */
+
         showMessage("", "");
 
 
-        const doc =
+        /*
+         * Ambil document main
+         */
+
+        const profileDoc =
           await db
             .collection("station_profile")
             .doc("main")
             .get();
 
 
-        if (!doc.exists) {
+        /*
+         * Jika tidak ditemukan
+         */
+
+        if (!profileDoc.exists) {
 
           showMessage(
-            "Data profil belum ditemukan.",
+            "Data profil stasiun belum ditemukan.",
             "error"
           );
 
@@ -483,9 +602,17 @@
         }
 
 
-        const data =
-          doc.data();
+        /*
+         * Ambil data
+         */
 
+        const data =
+          profileDoc.data();
+
+
+        /*
+         * NAMA STASIUN
+         */
 
         document.getElementById(
           "name"
@@ -493,11 +620,19 @@
           data.name || "";
 
 
+        /*
+         * KELAS STASIUN
+         */
+
         document.getElementById(
           "stationClass"
         ).value =
           data.class || "";
 
+
+        /*
+         * KODE STASIUN
+         */
 
         document.getElementById(
           "code"
@@ -505,11 +640,19 @@
           data.code || "";
 
 
+        /*
+         * ALAMAT
+         */
+
         document.getElementById(
           "address"
         ).value =
           data.address || "";
 
+
+        /*
+         * DESKRIPSI
+         */
 
         document.getElementById(
           "description"
@@ -517,11 +660,19 @@
           data.description || "";
 
 
+        /*
+         * JAM OPERASIONAL
+         */
+
         document.getElementById(
           "operatingHours"
         ).value =
           data.operatingHours || "";
 
+
+        /*
+         * NOMOR TELEPON
+         */
 
         document.getElementById(
           "phone"
@@ -545,7 +696,9 @@
 
 
     /*
-     * SIMPAN PROFIL
+     * ==============================
+     * SIMPAN PROFILE
+     * ==============================
      */
 
     document
@@ -554,8 +707,16 @@
         "submit",
         async function(event) {
 
+          /*
+           * Jangan reload halaman
+           */
+
           event.preventDefault();
 
+
+          /*
+           * Ambil data formulir
+           */
 
           const data = {
 
@@ -606,14 +767,28 @@
 
           try {
 
+            /*
+             * Simpan ke Firestore
+             *
+             * station_profile
+             *       ↓
+             *      main
+             */
+
             await db
               .collection("station_profile")
               .doc("main")
               .set(
                 data,
-                { merge: true }
+                {
+                  merge: true
+                }
               );
 
+
+            /*
+             * Tampilkan pesan berhasil
+             */
 
             showMessage(
               "Profil stasiun berhasil diperbarui.",
@@ -638,7 +813,9 @@
 
 
     /*
+     * ==============================
      * PESAN
+     * ==============================
      */
 
     function showMessage(
@@ -652,28 +829,48 @@
         );
 
 
+      /*
+       * Jika kosong
+       */
+
       if (!text) {
 
         message.style.display =
           "none";
+
+        message.textContent =
+          "";
 
         return;
 
       }
 
 
+      /*
+       * Isi pesan
+       */
+
       message.textContent =
         text;
 
+
+      /*
+       * Atur class
+       */
 
       message.className =
         "message " + type;
 
 
+      /*
+       * Tampilkan
+       */
+
       message.style.display =
         "block";
 
     }
+
 
   </script>
 
