@@ -298,6 +298,12 @@
                     </div>
                     <span class="menu-text">Fasilitas</span>
                 </div>
+                <div class="menu-item" onclick="switchPage('layout')">
+                    <div class="menu-icon-wrapper bg-purple-100 text-purple-600">
+                        <i class="fa-solid fa-map"></i>
+                    </div>
+                    <span class="menu-text">Layout<br>Area</span>
+                </div>
 <div class="menu-item" onclick="switchPage('visimisi')">
                     <div class="menu-icon-wrapper bg-yellow-100 text-yellow-600">
                         <i class="fa-solid fa-bullseye"></i>
@@ -936,7 +942,8 @@
 
         let appData = {
             schedules: [...defaultSchedules],
-            facilities: [...defaultFacilities]
+            facilities: [...defaultFacilities],
+            layoutImage: DEFAULT_LAYOUT_IMAGE
         };
         let currentJadwalTab = 'berangkat';
         let searchQuery = '';
@@ -947,7 +954,7 @@
         async function initApp() {
             setupPWA();
             loadLocalStorage();
-            renderLayoutImage(DEFAULT_LAYOUT_IMAGE);
+            renderLayoutImage(appData.layoutImage || DEFAULT_LAYOUT_IMAGE);
             renderHomeSchedules();
             renderJadwal();
             renderFasilitas();
@@ -1158,6 +1165,7 @@
                     console.error("Cloud save failed, saving local", e);
                     localStorage.setItem('gombong_schedules', JSON.stringify(appData.schedules));
                     localStorage.setItem('gombong_facilities', JSON.stringify(appData.facilities));
+                    if (appData.layoutImage) localStorage.setItem('gombong_layout_image', appData.layoutImage);
                 }
             } else {
                 localStorage.setItem('gombong_schedules', JSON.stringify(appData.schedules));
