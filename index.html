@@ -226,6 +226,7 @@
 
 <!-- Admin login diarahkan ke admin-login.html dan menggunakan Firebase Authentication. -->
 <meta name="application-name" content="Stasiun Gombong (GB)">
+<meta name="stasiun-gombong-admin-version" content="firebase-v4">
 <meta name="theme-color" content="#1C3F94">
 <meta name="description" content="Web App Stasiun Gombong (GB) Daop 5 Purwokerto">
 <link rel="manifest" href="./manifest.webmanifest">
@@ -249,7 +250,7 @@
                     </span>
                     <span id="cloud-status" class="text-[10px] bg-emerald-500/20 text-emerald-200 px-2 py-0.5 rounded-full"><i class="fa-solid fa-cloud"></i> Online</span>
                     <i class="fa-solid fa-bell"></i>
-                    <i class="fa-solid fa-gear" onclick="window.location.href='admin-login.html'" title="Login Admin"></i>
+                    <i class="fa-solid fa-gear" role="button" tabindex="0" onclick="window.location.href='admin-login.html'" onkeydown="if(event.key==='Enter'||event.key===' ') window.location.href='admin-login.html'" title="Login Admin"></i>
                 </div>
             </div>
             <div class="mt-2">
@@ -1158,7 +1159,7 @@
         // Website utama tidak lagi memproses username/password admin lama.
         window.openAdminPortal = function() {
             window.location.href = "admin-login.html";
-        }
+        };
 
         window.closeAdminPortal = function() {
             const modal = document.getElementById('login-modal');
@@ -1168,9 +1169,9 @@
         // Dipertahankan agar referensi lama tidak menyebabkan error,
         // tetapi login admin tidak lagi dilakukan di index.html.
         window.handleLogin = function(e) {
-            e.preventDefault();
+            if (e) e.preventDefault();
             window.location.href = "admin-login.html";
-        }
+        };
 
         window.handleLogout = function() {
             isAdminLoggedIn = false;
@@ -1463,7 +1464,7 @@
         window.onload = initApp;
     </script>
 
-<div id="update-badge">Update v3<small>Stasiun Gombong Web App</small></div>
+<div id="update-badge">Update v4<small>Stasiun Gombong Web App</small></div>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
