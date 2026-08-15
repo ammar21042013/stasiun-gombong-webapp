@@ -4,12 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Profil Stasiun - Admin</title>
+  <title>Profil Stasiun - Admin | Stasiun Gombong</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -18,7 +16,6 @@
       color: #222;
     }
 
-    /* HEADER */
     .header {
       background: #1464f4;
       color: white;
@@ -26,7 +23,7 @@
     }
 
     .header-content {
-      max-width: 900px;
+      max-width: 1100px;
       margin: auto;
     }
 
@@ -37,44 +34,51 @@
 
     .header p {
       margin: 5px 0 0;
-      opacity: 0.9;
+      opacity: .9;
       font-size: 14px;
     }
 
-    /* CONTAINER */
     .container {
-      max-width: 900px;
+      max-width: 1100px;
       margin: auto;
       padding: 20px;
     }
 
-    /* TOPBAR */
     .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
       margin-bottom: 20px;
     }
 
-    /* CARD */
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 11px 15px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .primary { background: #1464f4; color: white; }
+    .secondary { background: #e9edf2; color: #222; }
+
     .card {
       background: white;
       border-radius: 16px;
       padding: 20px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,.06);
     }
 
-    .card h2 {
-      margin-top: 0;
-    }
-
-    /* FORM */
     .form-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 15px;
     }
 
-    .full {
-      grid-column: 1 / -1;
-    }
+    .full { grid-column: 1 / -1; }
 
     label {
       display: block;
@@ -82,795 +86,386 @@
       margin-bottom: 7px;
     }
 
-    input,
-    textarea {
+    input, textarea {
       width: 100%;
       padding: 12px;
       border: 1px solid #ddd;
       border-radius: 10px;
       font-size: 15px;
-      font-family: Arial, sans-serif;
-      outline: none;
-    }
-
-    input:focus,
-    textarea:focus {
-      border-color: #1464f4;
+      font-family: inherit;
     }
 
     textarea {
-      min-height: 120px;
+      min-height: 130px;
       resize: vertical;
+      line-height: 1.5;
     }
 
-    /* BUTTON */
-    button {
-      border: none;
-      border-radius: 10px;
-      padding: 12px 16px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 14px;
+    .help {
+      margin-top: 5px;
+      color: #777;
+      font-size: 12px;
     }
 
-    .primary {
-      background: #1464f4;
-      color: white;
-    }
-
-    .secondary {
-      background: #e9edf2;
-      color: #222;
-    }
-
-    .actions {
+    .form-actions {
       margin-top: 20px;
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
     }
 
-    /* LOADING */
-    .loading {
-      text-align: center;
-      padding: 50px;
-    }
-
-    #page {
+    .status {
       display: none;
-    }
-
-    /* MESSAGE */
-    .message {
-      margin-top: 15px;
+      margin-bottom: 18px;
       padding: 12px;
       border-radius: 10px;
-      display: none;
+      font-size: 14px;
     }
 
     .success {
+      display: block;
       background: #e7f7ed;
       color: #16743a;
     }
 
     .error {
+      display: block;
       background: #ffe8e8;
       color: #b00020;
     }
 
-    /* MOBILE */
+    .loading {
+      text-align: center;
+      padding: 50px;
+    }
+
+    #page { display: none; }
+
+    .note {
+      background: #eef5ff;
+      color: #174a9c;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
     @media (max-width: 600px) {
-
-      .container {
-        padding: 15px;
-      }
-
-      .form-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .full {
-        grid-column: auto;
-      }
-
-      .actions {
-        flex-direction: column;
-      }
-
-      .actions button {
-        width: 100%;
-      }
-
+      .container { padding: 15px; }
+      .header { padding: 16px; }
+      .form-actions { flex-direction: column; }
+      .form-actions button { width: 100%; }
     }
   </style>
 </head>
 
 <body>
 
-
-  <!-- LOADING -->
   <div id="loading" class="loading">
     Memeriksa akses admin...
   </div>
 
-
-  <!-- HALAMAN ADMIN -->
   <div id="page">
 
-
-    <!-- HEADER -->
     <header class="header">
-
       <div class="header-content">
-
-        <h1>
-          Profil Stasiun
-        </h1>
-
-        <p>
-          Stasiun Kelas 1 Gombong
-        </p>
-
+        <h1>Profil Stasiun</h1>
+        <p>Stasiun Kelas 1 Gombong</p>
       </div>
-
     </header>
 
-
-    <!-- CONTENT -->
     <main class="container">
 
-
-      <!-- TOMBOL KEMBALI -->
       <div class="topbar">
-
         <button
-          type="button"
           class="secondary"
           onclick="window.location.href='admin.html'">
-
-          ← Kembali ke Dashboard
-
+          ← Dashboard
         </button>
-
       </div>
 
+      <div class="note">
+        Data di halaman ini disimpan ke Firestore pada dokumen
+        <strong>station_data/global</strong> sebagai bagian <strong>stationProfile</strong>.
+        Data jadwal dan fasilitas yang sudah ada tidak akan ditimpa.
+      </div>
 
-      <!-- FORM CARD -->
-      <div class="card">
+      <div id="status" class="status"></div>
 
-        <h2>
-          Informasi Stasiun
-        </h2>
+      <section class="card">
 
-        <p>
-          Kelola informasi Profil Stasiun Gombong.
-        </p>
+        <h2>Informasi Utama</h2>
 
-
-        <!-- FORM -->
         <form id="profileForm">
-
 
           <div class="form-grid">
 
-
-            <!-- 1. NAMA STASIUN -->
             <div>
-
-              <label for="name">
-                Nama Stasiun
-              </label>
-
-              <input
-                id="name"
-                name="name"
-                type="text"
-                placeholder="Contoh: Stasiun Gombong"
-                required>
-
+              <label for="name">Nama Stasiun</label>
+              <input id="name" type="text" required>
             </div>
 
-
-            <!-- 2. KELAS STASIUN -->
             <div>
-
-              <label for="stationClass">
-                Kelas Stasiun
-              </label>
-
-              <input
-                id="stationClass"
-                name="stationClass"
-                type="text"
-                placeholder="Contoh: Kelas 1"
-                required>
-
+              <label for="code">Kode Stasiun</label>
+              <input id="code" type="text" required>
             </div>
 
-
-            <!-- 3. KODE STASIUN -->
             <div>
-
-              <label for="code">
-                Kode Stasiun
-              </label>
-
-              <input
-                id="code"
-                name="code"
-                type="text"
-                placeholder="Contoh: GOM"
-                required>
-
+              <label for="className">Kelas Stasiun</label>
+              <input id="className" type="text" required>
             </div>
 
-
-            <!-- 4. JAM OPERASIONAL -->
             <div>
-
-              <label for="operatingHours">
-                Jam Operasional
-              </label>
-
-              <input
-                id="operatingHours"
-                name="operatingHours"
-                type="text"
-                placeholder="Contoh: 24 Jam">
-
+              <label for="elevation">Ketinggian</label>
+              <input id="elevation" type="text" placeholder="Contoh: +18 mdpl">
             </div>
 
-
-            <!-- 5. ALAMAT -->
             <div class="full">
-
-              <label for="address">
-                Alamat
-              </label>
-
-              <textarea
-                id="address"
-                name="address"
-                placeholder="Masukkan alamat lengkap stasiun"
-                required></textarea>
-
+              <label for="address">Alamat</label>
+              <input id="address" type="text" placeholder="Contoh: Jl. Stasiun Gombong, Kebumen">
             </div>
 
-
-            <!-- 6. DESKRIPSI -->
             <div class="full">
-
-              <label for="description">
-                Deskripsi
-              </label>
-
-              <textarea
-                id="description"
-                name="description"
-                placeholder="Masukkan deskripsi Stasiun Gombong"
-                required></textarea>
-
+              <label for="imageUrl">URL Foto Stasiun</label>
+              <input id="imageUrl" type="url" placeholder="Contoh: 1514023314.jpeg">
+              <div class="help">
+                Bisa menggunakan nama file gambar yang ada di repository, misalnya 1514023314.jpeg.
+              </div>
             </div>
 
-
-            <!-- 7. NOMOR TELEPON -->
-            <div>
-
-              <label for="phone">
-                Nomor Telepon
-              </label>
-
-              <input
-                id="phone"
-                name="phone"
-                type="text"
-                placeholder="Contoh: 0287xxxxxxx">
-
+            <div class="full">
+              <label for="description">Deskripsi / Sejarah & Informasi</label>
+              <textarea id="description" required></textarea>
+              <div class="help">
+                Pisahkan paragraf dengan satu baris kosong.
+              </div>
             </div>
-
 
           </div>
 
+          <h2 style="margin-top:30px;">Fasilitas Teknis</h2>
 
-          <!-- ACTION BUTTON -->
-          <div class="actions">
+          <div class="form-grid">
 
-            <button
-              type="submit"
-              class="primary">
+            <div>
+              <label for="platforms">Jumlah Peron</label>
+              <input id="platforms" type="text">
+            </div>
 
-              💾 Simpan Perubahan
+            <div>
+              <label for="tracks">Jumlah Jalur</label>
+              <input id="tracks" type="text">
+            </div>
 
+            <div>
+              <label for="signaling">Persinyalan</label>
+              <input id="signaling" type="text">
+            </div>
+
+            <div>
+              <label for="building">Bangunan</label>
+              <textarea id="building" style="min-height:100px;"></textarea>
+            </div>
+
+          </div>
+
+          <div class="form-actions">
+
+            <button type="submit" class="primary" id="saveButton">
+              Simpan Profil
             </button>
-
 
             <button
               type="button"
               class="secondary"
               onclick="loadProfile()">
-
-              🔄 Muat Ulang
-
+              Muat Ulang
             </button>
 
           </div>
 
-
-          <!-- MESSAGE -->
-          <div
-            id="message"
-            class="message">
-          </div>
-
-
         </form>
 
-      </div>
+      </section>
 
     </main>
 
   </div>
 
-
-  <!-- FIREBASE CONFIG -->
+  <!-- Firebase Configuration -->
   <script src="firebase-config.js"></script>
 
-
-  <!-- FIREBASE APP -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-
-
-  <!-- FIREBASE AUTH -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-
-
-  <!-- FIREBASE FIRESTORE -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-
   <script>
-
-
-    /*
-     * ==============================
-     * FIREBASE
-     * ==============================
-     */
 
     firebase.initializeApp(firebaseConfig);
 
     const auth = firebase.auth();
-
     const db = firebase.firestore();
 
+    const profileForm = document.getElementById("profileForm");
+    const saveButton = document.getElementById("saveButton");
+    const statusBox = document.getElementById("status");
 
-    /*
-     * ==============================
-     * CEK LOGIN ADMIN
-     * ==============================
-     */
+    const docRef = db
+      .collection("artifacts")
+      .doc("stasiun-gombong-gb")
+      .collection("public")
+      .doc("data")
+      .collection("station_data")
+      .doc("global");
 
-    auth.onAuthStateChanged(
-      async function(user) {
+    function showStatus(text, type) {
+      statusBox.textContent = text;
+      statusBox.className = "status " + type;
+    }
 
-        /*
-         * Jika belum login
-         */
+    function setValue(id, value) {
+      document.getElementById(id).value = value || "";
+    }
 
-        if (!user) {
-
-          window.location.href =
-            "admin-login.html";
-
-          return;
-
-        }
-
-
-        try {
-
-          /*
-           * Ambil data admin
-           */
-
-          const adminDoc =
-            await db
-              .collection("admins")
-              .doc(user.uid)
-              .get();
-
-
-          /*
-           * Pastikan admin terdaftar
-           */
-
-          if (!adminDoc.exists) {
-
-            await auth.signOut();
-
-            window.location.href =
-              "admin-login.html";
-
-            return;
-
-          }
-
-
-          /*
-           * Ambil role
-           */
-
-          const adminData =
-            adminDoc.data();
-
-
-          /*
-           * Pastikan role admin
-           */
-
-          if (
-            adminData.role !== "admin"
-          ) {
-
-            await auth.signOut();
-
-            window.location.href =
-              "admin-login.html";
-
-            return;
-
-          }
-
-
-          /*
-           * Tampilkan halaman
-           */
-
-          document.getElementById(
-            "loading"
-          ).style.display = "none";
-
-
-          document.getElementById(
-            "page"
-          ).style.display = "block";
-
-
-          /*
-           * Muat data profil
-           */
-
-          loadProfile();
-
-
-        } catch (error) {
-
-          console.error(error);
-
-          await auth.signOut();
-
-          window.location.href =
-            "admin-login.html";
-
-        }
-
-      }
-    );
-
-
-    /*
-     * ==============================
-     * LOAD PROFILE
-     * ==============================
-     */
+    function getValue(id) {
+      return document.getElementById(id).value.trim();
+    }
 
     async function loadProfile() {
 
       try {
 
-        /*
-         * Bersihkan pesan
-         */
+        const snapshot = await docRef.get();
 
-        showMessage("", "");
-
-
-        /*
-         * Ambil document main
-         */
-
-        const profileDoc =
-          await db
-            .collection("station_profile")
-            .doc("main")
-            .get();
-
-
-        /*
-         * Jika tidak ditemukan
-         */
-
-        if (!profileDoc.exists) {
-
-          showMessage(
-            "Data profil stasiun belum ditemukan.",
-            "error"
-          );
-
+        if (!snapshot.exists) {
           return;
-
         }
 
+        const data = snapshot.data() || {};
+        const profile = data.stationProfile || {};
 
-        /*
-         * Ambil data
-         */
+        setValue("name", profile.name || "Stasiun Gombong");
+        setValue("code", profile.code || "GB");
+        setValue("className", profile.className || "Kelas I");
+        setValue("elevation", profile.elevation || "+18 mdpl");
+        setValue("address", profile.address || "Jl. Stasiun Gombong, Kebumen");
+        setValue("imageUrl", profile.imageUrl || "1514023314.jpeg");
+        setValue("description", profile.description ||
+          "Stasiun Gombong (GB) adalah stasiun kereta api kelas I yang terletak di Wonokriyo, Gombong, Kebumen, Jawa Tengah. Stasiun yang terletak pada ketinggian +18 meter ini termasuk dalam Daerah Operasi V Purwokerto.\n\nBerdasarkan sejarah, Hindia Belanda pernah membangun Benteng Van der Wijck sebagai basis kekuatan militer Belanda, serta membangun stasiun yang kelak dikenal sebagai Stasiun Gombong.\n\nMeski terletak di bagian barat Kabupaten Kebumen, stasiun ini lebih dikenal oleh masyarakat Kebumen dan sekitarnya. Stasiun ini memiliki okupansi penumpang yang sangat baik karena disinggahi banyak kereta tujuan Bandung, Surabaya, dan Jakarta."
+        );
 
-        const data =
-          profileDoc.data();
-
-
-        /*
-         * NAMA STASIUN
-         */
-
-        document.getElementById(
-          "name"
-        ).value =
-          data.name || "";
-
-
-        /*
-         * KELAS STASIUN
-         */
-
-        document.getElementById(
-          "stationClass"
-        ).value =
-          data.class || "";
-
-
-        /*
-         * KODE STASIUN
-         */
-
-        document.getElementById(
-          "code"
-        ).value =
-          data.code || "";
-
-
-        /*
-         * ALAMAT
-         */
-
-        document.getElementById(
-          "address"
-        ).value =
-          data.address || "";
-
-
-        /*
-         * DESKRIPSI
-         */
-
-        document.getElementById(
-          "description"
-        ).value =
-          data.description || "";
-
-
-        /*
-         * JAM OPERASIONAL
-         */
-
-        document.getElementById(
-          "operatingHours"
-        ).value =
-          data.operatingHours || "";
-
-
-        /*
-         * NOMOR TELEPON
-         */
-
-        document.getElementById(
-          "phone"
-        ).value =
-          data.phone || "";
-
+        setValue("platforms", profile.platforms || "3 (satu peron sisi dan dua peron pulau)");
+        setValue("tracks", profile.tracks || "5 (Jalur 2 dan 3 sebagai sepur lurus)");
+        setValue("signaling", profile.signaling || "Elektrik tipe Sinyal Interlocking Len-02 (sejak 2020)");
+        setValue("building", profile.building ||
+          "Bangunan baru (barat bangunan lama) difokuskan untuk operasional, bangunan lama sebagai pintu keluar."
+        );
 
       } catch (error) {
 
         console.error(error);
 
-        showMessage(
-          "Gagal memuat profil: " +
-          error.message,
+        showStatus(
+          "Gagal memuat profil: " + error.message,
+          "error"
+        );
+      }
+    }
+
+    auth.onAuthStateChanged(async function(user) {
+
+      if (!user) {
+        window.location.href = "admin-login.html";
+        return;
+      }
+
+      try {
+
+        const adminDoc = await db
+          .collection("admins")
+          .doc(user.uid)
+          .get();
+
+        if (
+          !adminDoc.exists ||
+          adminDoc.data().role !== "admin"
+        ) {
+          await auth.signOut();
+          window.location.href = "admin-login.html";
+          return;
+        }
+
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("page").style.display = "block";
+
+        await loadProfile();
+
+      } catch (error) {
+
+        console.error(error);
+
+        await auth.signOut();
+        window.location.href = "admin-login.html";
+      }
+
+    });
+
+    profileForm.addEventListener("submit", async function(event) {
+
+      event.preventDefault();
+
+      saveButton.disabled = true;
+      saveButton.textContent = "Menyimpan...";
+      statusBox.className = "status";
+
+      const stationProfile = {
+        name: getValue("name"),
+        code: getValue("code"),
+        className: getValue("className"),
+        elevation: getValue("elevation"),
+        address: getValue("address"),
+        imageUrl: getValue("imageUrl"),
+        description: getValue("description"),
+        platforms: getValue("platforms"),
+        tracks: getValue("tracks"),
+        signaling: getValue("signaling"),
+        building: getValue("building")
+      };
+
+      try {
+
+        await docRef.set(
+          {
+            stationProfile: stationProfile
+          },
+          {
+            merge: true
+          }
+        );
+
+        showStatus(
+          "Profil stasiun berhasil disimpan.",
+          "success"
+        );
+
+      } catch (error) {
+
+        console.error(error);
+
+        showStatus(
+          "Gagal menyimpan profil: " + error.message,
           "error"
         );
 
+      } finally {
+
+        saveButton.disabled = false;
+        saveButton.textContent = "Simpan Profil";
       }
 
-    }
-
-
-    /*
-     * ==============================
-     * SIMPAN PROFILE
-     * ==============================
-     */
-
-    document
-      .getElementById("profileForm")
-      .addEventListener(
-        "submit",
-        async function(event) {
-
-          /*
-           * Jangan reload halaman
-           */
-
-          event.preventDefault();
-
-
-          /*
-           * Ambil data formulir
-           */
-
-          const data = {
-
-            name:
-              document
-                .getElementById("name")
-                .value
-                .trim(),
-
-            class:
-              document
-                .getElementById("stationClass")
-                .value
-                .trim(),
-
-            code:
-              document
-                .getElementById("code")
-                .value
-                .trim(),
-
-            address:
-              document
-                .getElementById("address")
-                .value
-                .trim(),
-
-            description:
-              document
-                .getElementById("description")
-                .value
-                .trim(),
-
-            operatingHours:
-              document
-                .getElementById("operatingHours")
-                .value
-                .trim(),
-
-            phone:
-              document
-                .getElementById("phone")
-                .value
-                .trim()
-
-          };
-
-
-          try {
-
-            /*
-             * Simpan ke Firestore
-             *
-             * station_profile
-             *       ↓
-             *      main
-             */
-
-            await db
-              .collection("station_profile")
-              .doc("main")
-              .set(
-                data,
-                {
-                  merge: true
-                }
-              );
-
-
-            /*
-             * Tampilkan pesan berhasil
-             */
-
-            showMessage(
-              "Profil stasiun berhasil diperbarui.",
-              "success"
-            );
-
-
-          } catch (error) {
-
-            console.error(error);
-
-            showMessage(
-              "Gagal menyimpan profil: " +
-              error.message,
-              "error"
-            );
-
-          }
-
-        }
-      );
-
-
-    /*
-     * ==============================
-     * PESAN
-     * ==============================
-     */
-
-    function showMessage(
-      text,
-      type
-    ) {
-
-      const message =
-        document.getElementById(
-          "message"
-        );
-
-
-      /*
-       * Jika kosong
-       */
-
-      if (!text) {
-
-        message.style.display =
-          "none";
-
-        message.textContent =
-          "";
-
-        return;
-
-      }
-
-
-      /*
-       * Isi pesan
-       */
-
-      message.textContent =
-        text;
-
-
-      /*
-       * Atur class
-       */
-
-      message.className =
-        "message " + type;
-
-
-      /*
-       * Tampilkan
-       */
-
-      message.style.display =
-        "block";
-
-    }
-
+    });
 
   </script>
 
