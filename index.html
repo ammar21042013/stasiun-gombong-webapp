@@ -767,12 +767,12 @@
         import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'stasiun-gombong-gb';
-        const firebaseConfig = (typeof window.firebaseConfig !== "undefined") ? window.firebaseConfig : (typeof __firebase_config !== "undefined" ? JSON.parse(__firebase_config) : null);
+        const appFirebaseConfig = (typeof firebaseConfig !== "undefined") ? firebaseConfig : ((typeof window.firebaseConfig !== "undefined") ? window.firebaseConfig : (typeof __firebase_config !== "undefined" ? JSON.parse(__firebase_config) : null));
 
         let app, db, auth;
         try {
-            if (!firebaseConfig) throw new Error("firebaseConfig tidak ditemukan. Pastikan firebase-config.js tersedia.");
-            app = initializeApp(firebaseConfig);
+            if (!appFirebaseConfig) throw new Error("firebaseConfig tidak ditemukan. Pastikan firebase-config.js tersedia.");
+            app = initializeApp(appFirebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
         } catch (e) {
