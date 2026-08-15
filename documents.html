@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kelola Dokumen - Admin | Stasiun Gombong</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f6f8;color:#222}
+.header{background:#1464f4;color:#fff;padding:18px 20px}
+.header-content,.container{max-width:1100px;margin:auto}
+.header h1{margin:0;font-size:22px}.header p{margin:5px 0 0;opacity:.9;font-size:14px}
+.container{padding:20px}.topbar{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.card{background:#fff;border-radius:16px;padding:20px;margin-bottom:20px;box-shadow:0 4px 15px rgba(0,0,0,.06)}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
+label{display:block;font-weight:bold;margin-bottom:7px}
+input,textarea,select{width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;font-size:15px}
+textarea{min-height:100px;resize:vertical}
+button{border:0;border-radius:10px;padding:11px 15px;cursor:pointer;font-weight:bold}
+.primary{background:#1464f4;color:#fff}.secondary{background:#e9edf2;color:#222}.danger{background:#d93025;color:#fff}
+.form-actions,.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}
+#formCard{display:none}
+.document{border:1px solid #e1e5e9;border-radius:14px;padding:16px;margin-bottom:12px}
+.document-header{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.document h3{margin:0 0 6px}.document p{margin:5px 0;color:#666;line-height:1.5}
+.status{display:inline-block;padding:5px 9px;border-radius:20px;font-size:12px;background:#e7f7ed;color:#16743a}
+.inactive{background:#ffe8e8;color:#b00020}
+.empty{text-align:center;padding:30px;color:#777}.loading{text-align:center;padding:50px}
+#page{display:none}.url{font-size:13px;word-break:break-all;color:#1464f4}
+.note{font-size:13px;color:#666;line-height:1.5}
+@media(max-width:600px){.container{padding:15px}.form-actions button,.actions button{width:100%}}
+</style>
+</head>
+<body>
+
+<div id="loading" class="loading">Memeriksa akses admin...</div>
+
+<div id="page">
+<header class="header">
+  <div class="header-content">
+    <h1>Kelola Dokumen</h1>
+    <p>Stasiun Kelas 1 Gombong</p>
+  </div>
+</header>
+
+<main class="container">
+
+<div class="topbar">
+  <button class="secondary" onclick="window.location.href='admin.html'">← Dashboard</button>
+  <button class="primary" onclick="showAddForm()">+ Tambah Dokumen</button>
+</div>
+
+<div id="formCard" class="card">
+  <h2 id="formTitle">Tambah Dokumen</h2>
+
+  <form id="documentForm">
+    <div class="form-grid">
+
+      <div>
+        <label for="title">Judul Dokumen</label>
+        <input id="title" type="text" placeholder="Contoh: Profil Stasiun Gombong" required>
+      </div>
+
+      <div>
+        <label for="category">Kategori</label>
+        <select id="category">
+          <option value="Umum">Umum</option>
+          <option value="Profil">Profil</option>
+          <option value="Jadwal">Jadwal</option>
+          <option value="Peraturan">Peraturan</option>
+          <option value="Informasi">Informasi</option>
+          <option value="Lainnya">Lainnya</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="url">Link Dokumen</label>
+        <input id="url" type="url" placeholder="https://..." required>
+      </div>
+
+      <div>
+        <label for="active">Aktif</label>
+        <select id="active">
+          <option value="true">Ya</option>
+          <option value="false">Tidak</option>
+        </select>
+      </div>
+
+      <div style="grid-column:1/-1">
+        <label for="description">Keterangan</label>
+        <textarea id="description" placeholder="Keterangan singkat dokumen"></textarea>
+      </div>
+
+    </div>
+
+    <div class="form-actions">
+      <button class="primary" type="submit" id="saveButton">Simpan</button>
+      <button class="secondary" type="button" onclick="hideForm()">Batal</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Daftar Dokumen</h2>
+  <p class="note">Dokumen di sini berupa tautan. File asli tetap berada di layanan penyimpanan yang Anda gunakan.</p>
+  <div id="documentList">Memuat dokumen...</div>
+</div>
+
+</main>
+</div>
+
+<script src="firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.firestore();
+
+let editingId=null;
+
+auth.onAuthStateChanged(async user=>{
+  if(!user){location.href="admin-login.html";return;}
+
+  try{
+    const adminDoc=await db.collection("admins").doc(user.uid).get();
+
+    if(!adminDoc.exists || adminDoc.data().role!=="admin"){
+      await auth.signOut();
+      location.href="admin-login.html";
+      return;
+    }
+
+    document.getElementById("loading").style.display="none";
+    document.getElementById("page").style.display="block";
+    loadDocuments();
+
+  }catch(error){
+    console.error(error);
+    await auth.signOut();
+    location.href="admin-login.html";
+  }
+});
+
+async function loadDocuments(){
+  const list=document.getElementById("documentList");
+  list.innerHTML="Memuat dokumen...";
+
+  try{
+    const snapshot=await db.collection("documents").get();
+
+    if(snapshot.empty){
+      list.innerHTML='<div class="empty">Belum ada dokumen.</div>';
+      return;
+    }
+
+    const docs=[];
+    snapshot.forEach(doc=>{
+      docs.push({id:doc.id,data:doc.data()});
+    });
+
+    docs.sort((a,b)=>
+      String(a.data.title||"").localeCompare(String(b.data.title||""))
+    );
+
+    list.innerHTML="";
+
+    docs.forEach(item=>{
+      const data=item.data;
+      const el=document.createElement("div");
+      el.className="document";
+
+      const status=data.active===false
+        ? '<span class="status inactive">Tidak Aktif</span>'
+        : '<span class="status">Aktif</span>';
+
+      el.innerHTML=`
+        <div class="document-header">
+          <div>
+            <h3>${escapeHtml(data.title||"-")}</h3>
+            <p><b>Kategori:</b> ${escapeHtml(data.category||"Umum")}</p>
+          </div>
+          <div>${status}</div>
+        </div>
+
+        <p>${escapeHtml(data.description||"Tidak ada keterangan.")}</p>
+
+        <div class="url">${escapeHtml(data.url||"-")}</div>
+
+        <div class="actions">
+          <button class="primary" onclick="openDocument('${item.id}')">Buka</button>
+          <button class="secondary" onclick="editDocument('${item.id}')">Edit</button>
+          <button class="danger" onclick="deleteDocument('${item.id}')">Hapus</button>
+        </div>
+      `;
+
+      list.appendChild(el);
+    });
+
+  }catch(error){
+    console.error(error);
+    list.innerHTML="<p>Gagal memuat dokumen: "+escapeHtml(error.message)+"</p>";
+  }
+}
+
+function showAddForm(){
+  editingId=null;
+  document.getElementById("formTitle").textContent="Tambah Dokumen";
+  document.getElementById("documentForm").reset();
+  document.getElementById("active").value="true";
+  document.getElementById("formCard").style.display="block";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function hideForm(){
+  editingId=null;
+  document.getElementById("formCard").style.display="none";
+  document.getElementById("documentForm").reset();
+}
+
+document.getElementById("documentForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+
+  const data={
+    title:document.getElementById("title").value.trim(),
+    category:document.getElementById("category").value,
+    url:document.getElementById("url").value.trim(),
+    description:document.getElementById("description").value.trim(),
+    active:document.getElementById("active").value==="true"
+  };
+
+  const button=document.getElementById("saveButton");
+  button.disabled=true;
+  button.textContent="Menyimpan...";
+
+  try{
+    if(editingId){
+      await db.collection("documents").doc(editingId).update(data);
+      alert("Dokumen berhasil diperbarui.");
+    }else{
+      await db.collection("documents").add(data);
+      alert("Dokumen berhasil ditambahkan.");
+    }
+
+    hideForm();
+    loadDocuments();
+
+  }catch(error){
+    console.error(error);
+    alert("Gagal menyimpan dokumen: "+error.message);
+  }finally{
+    button.disabled=false;
+    button.textContent="Simpan";
+  }
+});
+
+async function editDocument(id){
+  try{
+    const doc=await db.collection("documents").doc(id).get();
+
+    if(!doc.exists){
+      alert("Dokumen tidak ditemukan.");
+      return;
+    }
+
+    const data=doc.data();
+    editingId=id;
+
+    document.getElementById("formTitle").textContent="Edit Dokumen";
+    document.getElementById("title").value=data.title||"";
+    document.getElementById("category").value=data.category||"Umum";
+    document.getElementById("url").value=data.url||"";
+    document.getElementById("description").value=data.description||"";
+    document.getElementById("active").value=data.active===false?"false":"true";
+
+    document.getElementById("formCard").style.display="block";
+    window.scrollTo({top:0,behavior:"smooth"});
+
+  }catch(error){
+    console.error(error);
+    alert("Gagal mengambil data dokumen.");
+  }
+}
+
+function openDocument(id){
+  db.collection("documents").doc(id).get().then(doc=>{
+    if(!doc.exists){alert("Dokumen tidak ditemukan.");return;}
+    const url=doc.data().url;
+    if(!url){alert("Link dokumen belum diisi.");return;}
+    window.open(url,"_blank","noopener,noreferrer");
+  }).catch(error=>{
+    console.error(error);
+    alert("Gagal membuka dokumen.");
+  });
+}
+
+async function deleteDocument(id){
+  if(!confirm("Apakah Anda yakin ingin menghapus dokumen ini?")) return;
+
+  try{
+    await db.collection("documents").doc(id).delete();
+    alert("Dokumen berhasil dihapus.");
+    loadDocuments();
+  }catch(error){
+    console.error(error);
+    alert("Gagal menghapus dokumen: "+error.message);
+  }
+}
+
+function escapeHtml(value){
+  return String(value)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+</script>
+</body>
+</html>
