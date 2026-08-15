@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stasiun Gombong (GB) — Web App Resmi</title>
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#1C3F94">
+    <meta name="description" content="Aplikasi Resmi & Informasi Stasiun Gombong (GB) Daop 5 Purwokerto">
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/1C3F94/ffffff?text=GB">
+    <link rel="manifest" id="dynamic-manifest">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            900: '#14532d',
+                        },
+                        kai: {
+                            orange: '#F26522',
+                            blue: '#1C3F94',
+                            dark: '#111827'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f3f4f6;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        .page-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+            padding-bottom: 80px;
+        }
+        
+        .page-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            max-width: 480px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 50;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.02);
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #6b7280;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 20%;
+        }
+
+        .nav-item i {
+            font-size: 1.2rem;
+            margin-bottom: 4px;
+        }
+
+        .nav-item.active {
+            color: #1C3F94;
+        }
+
+        .nav-item.active i {
+            transform: scale(1.1);
+        }
+
+        .app-header {
+            background: linear-gradient(135deg, #1C3F94, #2A52BE);
+            color: white;
+            padding: 20px 20px 30px 20px;
+            border-bottom-left-radius: 24px;
+            border-bottom-right-radius: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 40;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid #f3f4f6;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: -20px;
+            padding: 0 16px;
+            position: relative;
+            z-index: 45;
+        }
+
+        .menu-item {
+            background: white;
+            border-radius: 16px;
+            padding: 12px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .menu-item:active {
+            transform: scale(0.95);
+        }
+
+        .menu-icon-wrapper {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            font-size: 1.2rem;
+        }
+
+        .menu-text {
+            font-size: 0.7rem;
+            text-align: center;
+            font-weight: 500;
+            color: #374151;
+            line-height: 1.1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.875rem;
+        }
+        th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 100;
+            left: 50%;
+            bottom: 80px;
+            transform: translateX(-50%);
+            font-size: 14px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        #toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+
+        @keyframes fadeout {
+            from {bottom: 80px; opacity: 1;}
+            to {bottom: 80px; opacity: 0;}
+        }
+    </style>
+
+<meta name="application-name" content="Stasiun Gombong (GB)">
+<meta name="theme-color" content="#1C3F94">
+<meta name="description" content="Web App Stasiun Gombong (GB) Daop 5 Purwokerto">
+<link rel="manifest" href="./manifest.webmanifest">
+<style>
+#update-badge{position:fixed;right:14px;bottom:14px;z-index:9999;background:#1C3F94;color:#fff;padding:8px 12px;border-radius:999px;font:600 12px/1.2 system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.18)}
+#update-badge small{display:block;font-weight:400;opacity:.85;margin-top:2px}
+</style>
+</head>
+<body>
+    <div class="app-container">
+        
+        <!-- App Header -->
+        <header class="app-header">
+            <div class="flex justify-between items-center mb-2">
+                <div class="flex items-center gap-2">
+                    <span class="bg-white/20 text-xs px-2.5 py-1 rounded-full font-semibold backdrop-blur-sm">Daop 5 Purwokerto</span>
+                </div>
+                <div class="flex gap-3 items-center">
+                    <span id="install-app-btn" class="text-[10px] bg-amber-500/20 text-amber-200 px-2.5 py-1 rounded-full font-bold cursor-pointer hover:bg-amber-500/30 transition-colors" style="display: none;" onclick="promptInstallApp()">
+                        <i class="fa-solid fa-download"></i> Install App
+                    </span>
+                    <span id="cloud-status" class="text-[10px] bg-emerald-500/20 text-emerald-200 px-2 py-0.5 rounded-full"><i class="fa-solid fa-cloud"></i> Online</span>
+                    <i class="fa-solid fa-bell"></i>
+                    <i class="fa-solid fa-gear" onclick="openAdminPortal()"></i>
+                </div>
+            </div>
+            <div class="mt-2">
+                <h1 class="text-2xl font-bold leading-tight">Stasiun Gombong</h1>
+                <p class="text-xs opacity-90 font-light flex items-center gap-1 mt-0.5">
+                    <i class="fa-solid fa-location-dot"></i> Jl. Stasiun Gombong, Kebumen
+                </p>
+            </div>
+            <div class="mt-4 bg-white/20 rounded-lg p-3 flex justify-between items-center backdrop-blur-sm">
+                <div>
+                    <p class="text-xs opacity-80">Ketinggian</p>
+                    <p class="font-bold">+18 mdpl</p>
+                </div>
+                <div class="w-px h-8 bg-white/30"></div>
+                <div>
+                    <p class="text-xs opacity-80">Kelas</p>
+                    <p class="font-bold">Kelas I</p>
+                </div>
+                <div class="w-px h-8 bg-white/30"></div>
+                <div>
+                    <p class="text-xs opacity-80">Kode</p>
+                    <p class="font-bold">GB</p>
+                </div>
+            </div>
+        </header>
+
+        <main id="page-home" class="page-content active">
+            <!-- Grid Menu -->
+            <div class="menu-grid">
+                <div class="menu-item" onclick="switchPage('jadwal')">
+                    <div class="menu-icon-wrapper bg-blue-100 text-kai-blue">
+                        <i class="fa-solid fa-train"></i>
+                    </div>
+                    <span class="menu-text">Jadwal<br>Kereta</span>
+                </div>
+                <div class="menu-item" onclick="switchPage('profil')">
+                    <div class="menu-icon-wrapper bg-orange-100 text-kai-orange">
+                        <i class="fa-solid fa-building"></i>
+                    </div>
+                    <span class="menu-text">Profil<br>Stasiun</span>
+                </div>
+                <div class="menu-item" onclick="switchPage('fasilitas')">
+                    <div class="menu-icon-wrapper bg-green-100 text-green-600">
+                        <i class="fa-solid fa-couch"></i>
+                    </div>
+                    <span class="menu-text">Fasilitas</span>
+                </div>
+                <div class="menu-item" onclick="switchPage('layout')">
+                    <div class="menu-icon-wrapper bg-purple-100 text-purple-600">
+                        <i class="fa-solid fa-map"></i>
+                    </div>
+                    <span class="menu-text">Layout<br>Area</span>
+                </div>
+                <div class="menu-item" onclick="switchPage('visimisi')">
+                    <div class="menu-icon-wrapper bg-yellow-100 text-yellow-600">
+                        <i class="fa-solid fa-bullseye"></i>
+                    </div>
+                    <span class="menu-text">Visi &<br>Misi</span>
+                </div>
+                <div class="menu-item" onclick="switchPage('dokumen')">
+                    <div class="menu-icon-wrapper bg-red-100 text-red-600">
+                        <i class="fa-solid fa-file-pdf"></i>
+                    </div>
+                    <span class="menu-text">Dokumen<br>Digital</span>
+                </div>
+                <div class="menu-item" onclick="switchPage('kontak')">
+                    <div class="menu-icon-wrapper bg-teal-100 text-teal-600">
+                        <i class="fa-solid fa-headset"></i>
+                    </div>
+                    <span class="menu-text">Kontak<br>CS</span>
+                </div>
+                <div class="menu-item" onclick="switchPage('informasi')">
+                    <div class="menu-icon-wrapper bg-gray-100 text-gray-600">
+                        <i class="fa-solid fa-circle-info"></i>
+                    </div>
+                    <span class="menu-text">Informasi<br>Umum</span>
+                </div>
+            </div>
+
+            <!-- News/Promo Banner -->
+            <div class="px-4 mt-6">
+                <h3 class="font-bold text-gray-800 mb-3 text-sm">Info Terkini</h3>
+                <div class="bg-gradient-to-r from-kai-blue to-kai-orange rounded-xl p-4 text-white relative overflow-hidden shadow-md">
+                    <div class="relative z-10">
+                        <h4 class="font-bold mb-1 text-lg">Stasiun Gombong Siap Melayani</h4>
+                        <p class="text-xs opacity-90">Nikmati perjalanan nyaman ke berbagai tujuan dari Stasiun Gombong bersama PT Kereta Api Indonesia (Persero).</p>
+                    </div>
+                    <i class="fa-solid fa-train absolute -right-4 -bottom-4 text-6xl opacity-20"></i>
+                </div>
+            </div>
+
+            <!-- Install Native App Banner Prompt -->
+            <div id="install-banner-card" class="px-4 mt-4" style="display: none;">
+                <div class="bg-gradient-to-r from-blue-900 to-indigo-900 rounded-xl p-4 text-white shadow-md flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-xl flex-shrink-0">
+                            <i class="fa-solid fa-mobile-screen-button text-orange-300"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm">Jadikan Aplikasi</h4>
+                            <p class="text-[11px] text-gray-200">Install ke beranda HP untuk akses cepat tanpa browser.</p>
+                        </div>
+                    </div>
+                    <button onclick="promptInstallApp()" class="bg-kai-orange text-white text-xs px-3 py-2 rounded-lg font-bold shadow hover:bg-orange-600 transition-colors flex-shrink-0">
+                        Install
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Schedule Preview -->
+            <div class="px-4 mt-6 mb-4">
+                <div class="flex justify-between items-end mb-3">
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-sm">Keberangkatan Terdekat</h3>
+                        <p class="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5">
+                            <i class="fa-solid fa-clock text-kai-blue"></i> Waktu BMKG: <span id="bmkg-clock-display" class="font-mono font-bold text-gray-700">--:--:-- WIB</span>
+                        </p>
+                    </div>
+                    <span class="text-kai-blue text-xs font-semibold cursor-pointer" onclick="switchPage('jadwal')">Lihat Semua</span>
+                </div>
+                <div class="card !mb-0 p-3">
+                    <div id="home-schedule-container" class="flex flex-col gap-3">
+                        <p class="text-xs text-gray-500 italic text-center py-2">Memuat jadwal keberangkatan...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <main id="page-profil" class="page-content">
+            <div class="px-4 pt-4">
+                <div class="flex items-center gap-3 mb-4 cursor-pointer" onclick="switchPage('home')">
+                    <i class="fa-solid fa-arrow-left text-gray-600"></i>
+                    <h2 class="font-bold text-lg text-gray-800">Profil Stasiun Gombong</h2>
+                </div>
+                
+                <img src="1514023314.jpeg" onerror="this.src='https://placehold.co/400x200/cccccc/333333?text=Stasiun+Gombong'" alt="Stasiun Gombong" class="w-full h-48 object-cover rounded-xl mb-4 shadow-sm">
+                
+                <div class="card">
+                    <h3 class="font-bold text-gray-800 border-b pb-2 mb-3">Sejarah & Informasi</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed text-justify">
+                        Stasiun Gombong (GB) adalah stasiun kereta api kelas I yang terletak di Wonokriyo, Gombong, Kebumen, Jawa Tengah. Stasiun yang terletak pada ketinggian +18 meter ini termasuk dalam Daerah Operasi V Purwokerto.
+                    </p>
+                    <p class="text-sm text-gray-600 leading-relaxed text-justify mt-2">
+                        Berdasarkan sejarah, Hindia Belanda pernah membangun Benteng Van der Wijck sebagai basis kekuatan militer Belanda, serta membangun stasiun yang kelak dikenal sebagai Stasiun Gombong.
+                    </p>
+                    <p class="text-sm text-gray-600 leading-relaxed text-justify mt-2">
+                        Meski terletak di bagian barat Kabupaten Kebumen, stasiun ini lebih dikenal oleh masyarakat Kebumen dan sekitarnya. Stasiun ini memiliki okupansi penumpang yang sangat baik karena disinggahi banyak kereta tujuan Bandung, Surabaya, dan Jakarta.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <h3 class="font-bold text-gray-800 border-b pb-2 mb-3">Fasilitas Teknis</h3>
+                    <ul class="text-sm text-gray-600 space-y-2">
+                        <li class="flex gap-2 items-start"><i class="fa-solid fa-check text-green-500 mt-1"></i> <div><strong>Jumlah Peron:</strong> 3 (satu peron sisi dan dua peron pulau)</div></li>
+                        <li class="flex gap-2 items-start"><i class="fa-solid fa-check text-green-500 mt-1"></i> <div><strong>Jumlah Jalur:</strong> 5 (Jalur 2 dan 3 sebagai sepur lurus)</div></li>
+                        <li class="flex gap-2 items-start"><i class="fa-solid fa-check text-green-500 mt-1"></i> <div><strong>Persinyalan:</strong> Elektrik tipe Sinyal Interlocking Len-02 (sejak 2020)</div></li>
+                        <li class="flex gap-2 items-start"><i class="fa-solid fa-check text-green-500 mt-1"></i> <div><strong>Bangunan:</strong> Bangunan baru (barat bangunan lama) difokuskan untuk operasional, bangunan lama sebagai pintu keluar.</div></li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+
+        <main id="page-visimisi" class="page-content">
+            <div class="px-4 pt-4">
+                <div class="flex items-center gap-3 mb-4 cursor-pointer" onclick="switchPage('home')">
+                    <i class="fa-solid fa-arrow-left text-gray-600"></i>
+                    <h2 class="font-bold text-lg text-gray-800">Visi & Misi KAI</h2>
+                </div>
+
+                <div class="bg-gradient-to-br from-kai-blue to-blue-800 rounded-xl p-6 text-white text-center mb-6 shadow-lg relative overflow-hidden">
+                    <i class="fa-solid fa-eye text-6xl absolute -right-2 -top-2 opacity-10"></i>
+                    <h3 class="font-bold text-xl mb-3 text-orange-300">Visi</h3>
+                    <p class="italic font-light leading-relaxed">
+                        "Menggerakkan transportasi berkelanjutan, meningkatkan kualitas hidup masyarakat."
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="flex items-center gap-2 border-b pb-2 mb-3">
+                        <i class="fa-solid fa-bullseye text-kai-orange text-lg"></i>
+                        <h3 class="font-bold text-gray-800">Misi</h3>
+                    </div>
+                    <ul class="text-sm text-gray-600 space-y-3 pl-2">
+                        <li class="flex gap-3 items-start">
+                            <div class="bg-orange-100 text-kai-orange w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-xs font-bold">1</span></div>
+                            <p class="leading-relaxed">Menyediakan jasa yang mengedepankan keselamatan, ketepatan waktu dan kenyamanan.</p>
+                        </li>
+                        <li class="flex gap-3 items-start">
+                            <div class="bg-orange-100 text-kai-orange w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-xs font-bold">2</span></div>
+                            <p class="leading-relaxed">Mengembangkan sumber daya dan teknologi dengan mengedepankan ESG.</p>
+                        </li>
+                        <li class="flex gap-3 items-start">
+                            <div class="bg-orange-100 text-kai-orange w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-xs font-bold">3</span></div>
+                            <p class="leading-relaxed">Berperan aktif dalam pengembangan transportasi antarmoda berkelanjutan bersama pemangku kepentingan.</p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+
+        <main id="page-jadwal" class="page-content">
+            <div class="px-4 pt-4">
+                <div class="flex items-center gap-3 mb-4 cursor-pointer" onclick="switchPage('home')">
+                    <i class="fa-solid fa-arrow-left text-gray-600"></i>
+                    <h2 class="font-bold text-lg text-gray-800">Jadwal Kereta Api</h2>
+                </div>
+                
+                <!-- Pesan Tiket Banner -->
+                <a href="https://booking.kai.id/" target="_blank" rel="noopener noreferrer" class="block w-full bg-gradient-to-r from-kai-orange to-red-500 text-white rounded-xl p-4 mb-4 shadow-md flex items-center justify-between active:scale-95 transition-transform">
+                    <div>
+                        <h3 class="font-bold">Pesan Tiket Resmi KAI</h3>
+                        <p class="text-xs opacity-90">via booking.kai.id</p>
+                    </div>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-lg"></i>
+                </a>
+
+                <!-- Tabs -->
+                <div class="flex bg-gray-200 rounded-lg p-1 mb-4">
+                    <button class="flex-1 py-2 text-sm font-medium rounded-md bg-white text-kai-blue shadow-sm" id="btn-tab-berangkat" onclick="switchTab('berangkat')">Keberangkatan</button>
+                    <button class="flex-1 py-2 text-sm font-medium rounded-md text-gray-600" id="btn-tab-datang" onclick="switchTab('datang')">Kedatangan</button>
+                </div>
+                
+                <!-- Search -->
+                <div class="relative mb-4">
+                    <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" id="search-jadwal" placeholder="Cari nama kereta atau relasi..." class="w-full bg-white border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-kai-blue focus:ring-1 focus:ring-kai-blue transition-colors">
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table id="table-jadwal">
+                            <thead>
+                                <tr>
+                                    <th>KA</th>
+                                    <th>Relasi Perjalanan</th>
+                                    <th class="text-right">Jam</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-jadwal">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <p class="text-xs text-center text-gray-400 mt-4">*Data dihimpun dari booking.kai.id. Jadwal dapat berubah sewaktu-waktu.</p>
+            </div>
+        </main>
+
+        <main id="page-fasilitas" class="page-content">
+            <div class="px-4 pt-4">
+                <div class="flex items-center gap-3 mb-4 cursor-pointer" onclick="switchPage('home')">
+                    <i class="fa-solid fa-arrow-left text-gray-600"></i>
+                    <h2 class="font-bold text-lg text-gray-800">Fasilitas Stasiun</h2>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3" id="fasilitas-container">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </main>
+
+        <main id="page-layout" class="page-content">
+            <div class="px-4 pt-4">
+                <div class="flex items-center gap-3 mb-4 cursor-pointer" onclick="switchPage('home')">
+                    <i class="fa-solid fa-arrow-left text-gray-600"></i>
+                    <h2 class="font-bold text-lg text-gray-800">Layout Stasiun Gombong</h2>
+                </div>
+
+                <div class="card">
+                    <h3 class="font-bold text-gray-800 border-b pb-2 mb-3">Skema Jalur & Peron</h3>
+                    <div class="space-y-4">
+                        <div class="bg-slate-900 text-white p-4 rounded-xl font-mono text-xs space-y-2 shadow-inner">
+                            <div class="flex justify-between items-center text-slate-400 border-b border-slate-700 pb-2">
+                                <span>Arah Purwokerto / Barat</span>
+                                <span class="text-kai-orange font-bold">Stasiun Gombong (GB)</span>
+                                <span>Arah Kutoarjo / Timur</span>
+                            </div>
+                            <div class="py-2 space-y-1">
+                                <p class="text-yellow-400">=== Jalur 5 (Sepur Belok / Parkir Kereta) ===</p>
+                                <p class="text-green-400">=== Jalur 4 (Sepur Belok untuk Susul/Silang) ===</p>
+                                <p class="text-blue-400 font-bold">--- Jalur 3 (Sepur Lurus Arah Timur) ---</p>
+                                <p class="text-blue-400 font-bold">--- Jalur 2 (Sepur Lurus Arah Barat) ---</p>
+                                <p class="text-yellow-400">=== Jalur 1 (Sepur Belok dengan Peron Sisi) ===</p>
+                            </div>
+                            <div class="text-[10px] text-slate-400 pt-2 border-t border-slate-700 flex justify-between">
+                                <span>Peron 1 (Utara)</span>
+                                <span>Peron 2/3 (Pulau)</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-600 leading-relaxed">
+                            Stasiun Gombong memiliki 5 jalur kereta api dengan jalur 2 dan jalur 3 merupakan sepur lurus ganda (double track). Dilengkapi fasilitas peron sisi dan peron pulau untuk naik turun penumpang.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <main id="page-dokumen" class="page-content">
+            <div class="px-4 pt-4">
+                <div class="flex items-center gap-3 mb-4 cursor-pointer" onclick="switchPage('home')">
+                    <i class="fa-solid fa-arrow-left text-gray-600"></i>
+                    <h2 class="font-bold text-lg text-gray-800">Dokumen Digital</h2>
+                </div>
+                
+                <p class="text-sm text-gray-600 mb-4">Unduh dokumen terkait Stasiun Gombong dan panduan layanan KAI.</p>
+
+                <div class="space-y-3">
+                    <div class="card flex items-center justify-between !p-3 cursor-pointer hover:bg-gray-50" onclick="downloadMock('Peta Jaringan KAI Daop 5')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-red-100 text-red-500 rounded-lg flex items-center justify-center">
+                                <i class="fa-solid fa-file-pdf text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm text-gray-800">Peta Jaringan Daop 5</h4>
+                                <p class="text-xs text-gray-500">PDF • 2.4 MB</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-download text-kai-blue"></i>
+                    </div>
+
+                    <div class="card flex items-center justify-between !p-3 cursor-pointer hover:bg-gray-50" onclick="downloadMock('Panduan Boarding Face Recognition')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-red-100 text-red-500 rounded-lg flex items-center justify-center">
+                                <i class="fa-solid fa-file-pdf text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm text-gray-800">Panduan Boarding</h4>
+                                <p class="text-xs text-gray-500">PDF • 1.1 MB</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-download text-kai-blue"></i>
+                    </div>
+
+                    <div class="card flex items-center justify-between !p-3 cursor-pointer hover:bg-gray-50" onclick="downloadMock('Tata Tertib Penumpang KAI')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-red-100 text-red-500 rounded-lg flex items-center justify-center">
+                                <i class="fa-solid fa-file-pdf text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm text-gray-800">Tata Tertib Penumpang</h4>
+                                <p class="text-xs text-gray-500">PDF • 0.8 MB</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-download text-kai-blue"></i>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <main id="page-kontak" class="page-content">
+            <div class="px-4 pt-4">
+                <div class="flex items-center gap-3 mb-4 cursor-pointer" onclick="switchPage('home')">
+                    <i class="fa-solid fa-arrow-left text-gray-600"></i>
+                    <h2 class="font-bold text-lg text-gray-800">Kontak Resmi</h2>
+                </div>
+
+                <div class="card bg-blue-50 border-blue-100">
+                    <div class="flex items-center justify-center flex-col text-center py-4">
+                        <div class="w-16 h-16 bg-kai-blue text-white rounded-full flex items-center justify-center text-2xl mb-3 shadow-md">
+                            <i class="fa-solid fa-headset"></i>
+                        </div>
+                        <h3 class="font-bold text-gray-800">Contact Center KAI121</h3>
+                        <p class="text-sm text-gray-600 mt-1 mb-4">Layanan pelanggan 24 jam</p>
+                        
+                        <a href="tel:121" class="w-full bg-kai-blue text-white rounded-lg py-3 font-semibold flex items-center justify-center gap-2 mb-2">
+                            <i class="fa-solid fa-phone"></i> Hubungi 121
+                        </a>
+                    </div>
+                </div>
+
+                <h3 class="font-bold text-gray-800 mt-6 mb-3 text-sm">Saluran Lainnya</h3>
+                
+                <div class="space-y-3">
+                    <div class="card flex items-center justify-between !p-4 cursor-pointer hover:bg-gray-50" onclick="copyToClipboard('cs@kai.id')">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center">
+                                <i class="fa-solid fa-envelope"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm text-gray-800">Email</h4>
+                                <p class="text-sm text-kai-blue font-medium">cs@kai.id</p>
+                            </div>
+                        </div>
+                        <i class="fa-regular fa-copy text-gray-400"></i>
+                    </div>
+
+                    <div class="card flex items-center gap-4 !p-4">
+                        <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                            <i class="fa-brands fa-whatsapp text-lg"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm text-gray-800">WhatsApp KAI121</h4>
+                            <p class="text-sm text-gray-600">0811-1211-1121</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card flex items-center gap-4 !p-4">
+                        <div class="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center">
+                            <i class="fa-brands fa-x-twitter"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm text-gray-800">Twitter / X</h4>
+                            <p class="text-sm text-gray-600">@KAI121</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <main id="page-informasi" class="page-content">
+            <div class="px-4 pt-4">
+                <div class="flex items-center gap-3 mb-4 cursor-pointer" onclick="switchPage('home')">
+                    <i class="fa-solid fa-arrow-left text-gray-600"></i>
+                    <h2 class="font-bold text-lg text-gray-800">Informasi Umum</h2>
+                </div>
+
+                <div class="card">
+                    <h3 class="font-bold text-kai-blue border-b pb-2 mb-3">Tata Cara Boarding</h3>
+                    <ul class="list-disc pl-5 text-sm text-gray-600 space-y-2">
+                        <li>Siapkan e-ticket atau boarding pass cetak.</li>
+                        <li>Siapkan kartu identitas asli (KTP/KIA/Paspor).</li>
+                        <li>Boarding dapat dilakukan mulai 2 jam sebelum keberangkatan.</li>
+                        <li>Penumpang diwajibkan datang tepat waktu. Pintu boarding ditutup 5 menit sebelum keberangkatan.</li>
+                        <li>Untuk stasiun yang mendukung Face Recognition, silakan registrasi melalui aplikasi Access by KAI atau mesin di stasiun.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3 class="font-bold text-kai-blue border-b pb-2 mb-3">Ketentuan Bagasi</h3>
+                    <ul class="list-disc pl-5 text-sm text-gray-600 space-y-2">
+                        <li>Setiap penumpang diperbolehkan membawa bagasi maksimum 20 kg.</li>
+                        <li>Volume maksimum bagasi adalah 100 dm³ (dimensi maksimal 70x48x30 cm).</li>
+                        <li>Barang bawaan lebih dari ketentuan akan dikenakan biaya tambahan per kilogram (Eksekutif Rp10.000, Bisnis Rp6.000, Ekonomi Rp2.000).</li>
+                        <li>Dilarang membawa binatang, narkotika, senjata api/tajam, barang mudah terbakar, dan barang berbau menyengat.</li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+
+        <!-- Admin Login Modal -->
+        <div id="login-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" style="display: none;">
+            <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
+                        <i class="fa-solid fa-lock text-kai-blue"></i> Login Admin Stasiun
+                    </h3>
+                    <button onclick="closeAdminPortal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
+                <p class="text-xs text-gray-500 mb-4">Masukkan password admin untuk mengelola jadwal dan fasilitas stasiun.</p>
+                <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
+                    <div>
+                        <label class="text-xs text-gray-600 font-medium">Username</label>
+                        <input type="text" id="login-username" required class="w-full border rounded-lg p-2.5 text-sm mt-1 focus:outline-none focus:border-kai-blue" placeholder="stasiungb">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-600 font-medium">Password</label>
+                        <input type="password" id="login-password" required class="w-full border rounded-lg p-2.5 text-sm mt-1 focus:outline-none focus:border-kai-blue" placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="w-full bg-kai-blue text-white rounded-lg py-2.5 text-sm font-bold shadow-md hover:bg-blue-900 transition-colors">Masuk Dashboard</button>
+                </form>
+            </div>
+        </div>
+
+        <main id="page-admin" class="page-content">
+            <div class="px-4 pt-4">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center gap-3 cursor-pointer" onclick="switchPage('home')">
+                        <i class="fa-solid fa-arrow-left text-gray-600"></i>
+                        <h2 class="font-bold text-lg text-gray-800">Dashboard Admin</h2>
+                    </div>
+                    <button onclick="handleLogout()" class="text-xs text-red-600 bg-red-50 border border-red-200 px-3 py-1.5 rounded-lg font-medium"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
+                </div>
+                
+                <div class="bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg text-xs mb-4">
+                    <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Data disinkronkan secara online melalui Cloud Database.
+                </div>
+
+                <!-- Admin Tabs -->
+                <div class="flex bg-gray-200 rounded-lg p-1 mb-4">
+                    <button class="flex-1 py-2 text-sm font-medium rounded-md bg-white text-kai-blue shadow-sm" id="btn-admin-jadwal" onclick="switchAdminTab('jadwal')">Kelola Jadwal</button>
+                    <button class="flex-1 py-2 text-sm font-medium rounded-md text-gray-600" id="btn-admin-fasilitas" onclick="switchAdminTab('fasilitas')">Kelola Fasilitas</button>
+                </div>
+
+                <!-- Kelola Jadwal Section -->
+                <div id="admin-jadwal-section">
+                    <div class="card mb-4 bg-gray-50 border-dashed border-2 border-gray-300">
+                        <h3 class="font-bold text-sm mb-3">Tambah Jadwal Baru</h3>
+                        <form id="form-add-jadwal" class="space-y-3">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-xs text-gray-600 font-medium">Nama Kereta</label>
+                                    <input type="text" id="add-ka-nama" required class="w-full border rounded p-2 text-sm mt-1" placeholder="Cth: Malabar">
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600 font-medium">Jenis</label>
+                                    <select id="add-ka-jenis" class="w-full border rounded p-2 text-sm mt-1">
+                                        <option value="berangkat">Keberangkatan</option>
+                                        <option value="datang">Kedatangan</option>
+                                    </select>
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="text-xs text-gray-600 font-medium">Relasi Perjalanan</label>
+                                    <input type="text" id="add-ka-relasi" required class="w-full border rounded p-2 text-sm mt-1" placeholder="Cth: Bandung (BD) - Malang (ML)">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="text-xs text-gray-600 font-medium">Jam (HH:MM)</label>
+                                    <input type="time" id="add-ka-jam" required class="w-full border rounded p-2 text-sm mt-1">
+                                </div>
+                            </div>
+                            <button type="submit" class="w-full bg-kai-blue text-white rounded p-2 text-sm font-bold mt-2">Simpan Jadwal</button>
+                        </form>
+                    </div>
+                    
+                    <h3 class="font-bold text-sm mb-2 text-gray-700">Daftar Jadwal (Tersimpan)</h3>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="overflow-x-auto max-h-[300px] overflow-y-auto">
+                            <table class="w-full">
+                                <thead class="sticky top-0 z-10">
+                                    <tr>
+                                        <th>KA</th>
+                                        <th>Relasi</th>
+                                        <th>Jam</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-tbody-jadwal">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kelola Fasilitas Section -->
+                <div id="admin-fasilitas-section" style="display: none;">
+                    <div class="card mb-4 bg-gray-50 border-dashed border-2 border-gray-300">
+                        <h3 class="font-bold text-sm mb-3">Tambah Fasilitas Baru</h3>
+                        <form id="form-add-fasilitas" class="space-y-3">
+                            <div>
+                                <label class="text-xs text-gray-600 font-medium">Nama Fasilitas</label>
+                                <input type="text" id="add-fas-nama" required class="w-full border rounded p-2 text-sm mt-1" placeholder="Cth: Ruang Tunggu Eksekutif">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-600 font-medium">Icon (FontAwesome Class)</label>
+                                <input type="text" id="add-fas-icon" required class="w-full border rounded p-2 text-sm mt-1" placeholder="Cth: fa-solid fa-couch">
+                                <p class="text-[10px] text-gray-500 mt-1">Referensi: fontawesome.com/search</p>
+                            </div>
+                            <button type="submit" class="w-full bg-kai-blue text-white rounded p-2 text-sm font-bold mt-2">Simpan Fasilitas</button>
+                        </form>
+                    </div>
+
+                    <h3 class="font-bold text-sm mb-2 text-gray-700">Daftar Fasilitas (Tersimpan)</h3>
+                    <div class="grid grid-cols-1 gap-2" id="admin-list-fasilitas">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="mt-6 text-center">
+                    <button onclick="resetData()" class="text-xs text-red-500 underline border border-red-200 bg-red-50 px-3 py-1 rounded">Reset ke Data Awal KAI</button>
+                </div>
+            </div>
+        </main>
+
+        <nav class="bottom-nav">
+            <div class="nav-item active" onclick="switchPage('home')" id="nav-home">
+                <i class="fa-solid fa-house"></i>
+                <span>Beranda</span>
+            </div>
+            <div class="nav-item" onclick="switchPage('jadwal')" id="nav-jadwal">
+                <i class="fa-solid fa-calendar-days"></i>
+                <span>Jadwal</span>
+            </div>
+            <div class="nav-item" onclick="switchPage('profil')" id="nav-profil">
+                <i class="fa-solid fa-train-tram"></i>
+                <span>Stasiun</span>
+            </div>
+            <div class="nav-item" onclick="switchPage('informasi')" id="nav-informasi">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>Info</span>
+            </div>
+        </nav>
+
+        <!-- Toast Notification -->
+        <div id="toast">
+            <span id="toast-text">Message</span>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'stasiun-gombong-gb';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "demo", projectId: "demo" };
+
+        let app, db, auth;
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+        } catch (e) {
+            console.warn("Firebase init fallback", e);
+        }
+
+        const defaultSchedules = [
+            { id: 1, type: 'berangkat', name: 'Malabar', relation: 'Bandung (BD) - Malang (ML)', time: '00:14' },
+            { id: 2, type: 'berangkat', name: 'Lodaya', relation: 'Bandung (BD) - Solo Balapan (SLO)', time: '00:14' },
+            { id: 3, type: 'berangkat', name: 'Senja Utama YK', relation: 'Pasar Senen (PSE) - Yogyakarta (YK)', time: '00:26' },
+            { id: 4, type: 'berangkat', name: 'Mutiara Selatan', relation: 'Bandung (BD) - Surabaya Gubeng (SGU)', time: '01:09' },
+            { id: 5, type: 'berangkat', name: 'Bengawan', relation: 'Purwosari (PWS) - Pasar Senen (PSE)', time: '01:30' },
+            { id: 6, type: 'berangkat', name: 'Jaka Tingkir', relation: 'Solo Balapan (SLO) - Pasar Senen (PSE)', time: '02:12' },
+            { id: 7, type: 'berangkat', name: 'Mataram', relation: 'Pasar Senen (PSE) - Solo Balapan (SLO)', time: '03:03' },
+            { id: 8, type: 'berangkat', name: 'Kutojaya Selatan', relation: 'Kiaracondong (KAC) - Kutoarjo (KTA)', time: '03:14' },
+            { id: 9, type: 'berangkat', name: 'Singasari', relation: 'Pasar Senen (PSE) - Blitar (BL)', time: '03:52' },
+            { id: 10, type: 'berangkat', name: 'Kahuripan', relation: 'Kiaracondong (KAC) - Blitar (BL)', time: '04:40' },
+            { id: 11, type: 'berangkat', name: 'Progo', relation: 'Pasar Senen (PSE) - Lempuyangan (LPN)', time: '04:53' },
+            { id: 12, type: 'berangkat', name: 'Sawunggalih', relation: 'Kutoarjo (KTA) - Pasar Senen (PSE)', time: '07:18' },
+            { id: 13, type: 'berangkat', name: 'Joglosemarkerto', relation: 'Cilacap (CP) - Yogyakarta (YK)', time: '07:18' },
+            { id: 14, type: 'berangkat', name: 'Logawa', relation: 'Purwokerto (PWT) - Surabaya Gubeng (SGU)', time: '07:42' },
+            { id: 15, type: 'berangkat', name: 'Fajar Utama YK', relation: 'Yogyakarta (YK) - Pasar Senen (PSE)', time: '08:46' },
+            { id: 16, type: 'berangkat', name: 'Joglosemarkerto', relation: 'Solo Balapan (SLO) - Solo Balapan (SLO)', time: '09:08' },
+            { id: 17, type: 'berangkat', name: 'Malioboro Ekspres', relation: 'Purwokerto (PWT) - Malang (ML)', time: '09:09' },
+            { id: 18, type: 'berangkat', name: 'Lodaya', relation: 'Solo Balapan (SLO) - Bandung (BD)', time: '09:36' },
+            { id: 19, type: 'berangkat', name: 'Bogowonto', relation: 'Lempuyangan (LPN) - Pasar Senen (PSE)', time: '10:03' },
+            { id: 20, type: 'berangkat', name: 'Ranggajati', relation: 'Cirebon (CN) - Surabaya Gubeng (SGU)', time: '10:03' },
+            { id: 21, type: 'berangkat', name: 'Kutojaya Selatan', relation: 'Kutoarjo (KTA) - Kiaracondong (KAC)', time: '10:49' },
+            { id: 22, type: 'berangkat', name: 'Mataram', relation: 'Solo Balapan (SLO) - Pasar Senen (PSE)', time: '11:06' },
+            { id: 23, type: 'berangkat', name: 'Lodaya', relation: 'Bandung (BD) - Solo Balapan (SLO)', time: '11:44' },
+            { id: 24, type: 'berangkat', name: 'Pasundan', relation: 'Surabaya Gubeng (SGU) - Kiaracondong (KAC)', time: '11:50' },
+            { id: 25, type: 'berangkat', name: 'Sawunggalih', relation: 'Pasar Senen (PSE) - Kutoarjo (KTA)', time: '11:55' },
+            { id: 26, type: 'berangkat', name: 'Joglosemarkerto', relation: 'Yogyakarta (YK) - Cilacap (CP)', time: '12:12' },
+            { id: 27, type: 'berangkat', name: 'Bangunkarta', relation: 'Jombang (JG) - Pasar Senen (PSE)', time: '12:32' },
+            { id: 28, type: 'berangkat', name: 'Joglosemarkerto', relation: 'Solo Balapan (SLO) - Semarang Tawang (SMT)', time: '12:49' },
+            { id: 29, type: 'berangkat', name: 'Fajar Utama YK', relation: 'Pasar Senen (PSE) - Yogyakarta (YK)', time: '13:20' },
+            { id: 30, type: 'berangkat', name: 'Gajahwong', relation: 'Pasar Senen (PSE) - Lempuyangan (LPN)', time: '14:03' },
+            { id: 31, type: 'berangkat', name: 'Sancaka Utara', relation: 'Solo Balapan (SLO) - Cilacap (CP)', time: '14:45' },
+            { id: 32, type: 'berangkat', name: 'Malabar', relation: 'Bandung (BD) - Malang (ML)', time: '15:03' },
+            { id: 33, type: 'berangkat', name: 'Progo', relation: 'Lempuyangan (LPN) - Pasar Senen (PSE)', time: '15:07' },
+            { id: 34, type: 'berangkat', name: 'Bengawan', relation: 'Pasar Senen (PSE) - Purwosari (PWS)', time: '15:20' },
+            { id: 35, type: 'berangkat', name: 'Ranggajati', relation: 'Surabaya Gubeng (SGU) - Cirebon (CN)', time: '16:21' },
+            { id: 36, type: 'berangkat', name: 'Kertanegara', relation: 'Malang (ML) - Purwokerto (PWT)', time: '16:34' },
+            { id: 37, type: 'berangkat', name: 'Wijayakusuma', relation: 'Cilacap (CP) - Ketapang (KTG)', time: '16:40' },
+            { id: 38, type: 'berangkat', name: 'Gayabaru Malam Selatan', relation: 'Pasar Senen (PSE) - Surabaya Gubeng (SGU)', time: '17:14' },
+            { id: 39, type: 'berangkat', name: 'Jaka Tingkir', relation: 'Pasar Senen (PSE) - Solo Balapan (SLO)', time: '17:24' },
+            { id: 40, type: 'berangkat', name: 'Pasundan', relation: 'Kiaracondong (KAC) - Surabaya Gubeng (SGU)', time: '17:36' },
+            { id: 41, type: 'berangkat', name: 'Sancaka Utara', relation: 'Cilacap (CP) - Solo Balapan (SLO)', time: '18:59' },
+            { id: 42, type: 'berangkat', name: 'Senja Utama YK', relation: 'Yogyakarta (YK) - Pasar Senen (PSE)', time: '19:04' },
+            { id: 43, type: 'berangkat', name: 'Logawa', relation: 'Surabaya Gubeng (SGU) - Purwokerto (PWT)', time: '19:29' },
+            { id: 44, type: 'berangkat', name: 'Kertanegara', relation: 'Purwokerto (PWT) - Malang (ML)', time: '19:30' },
+            { id: 45, type: 'berangkat', name: 'Jayakarta', relation: 'Surabaya Gubeng (SGU) - Pasar Senen (PSE)', time: '20:16' },
+            { id: 46, type: 'berangkat', name: 'Sawunggalih', relation: 'Kutoarjo (KTA) - Pasar Senen (PSE)', time: '21:01' },
+            { id: 47, type: 'berangkat', name: 'Lodaya', relation: 'Solo Balapan (SLO) - Bandung (BD)', time: '21:36' },
+            { id: 48, type: 'berangkat', name: 'Jayakarta', relation: 'Pasar Senen (PSE) - Surabaya Gubeng (SGU)', time: '22:48' },
+            { id: 49, type: 'berangkat', name: 'Gajahwong', relation: 'Lempuyangan (LPN) - Pasar Senen (PSE)', time: '22:55' },
+            { id: 50, type: 'berangkat', name: 'Singasari', relation: 'Blitar (BL) - Pasar Senen (PSE)', time: '23:22' },
+            { id: 51, type: 'berangkat', name: 'Malabar', relation: 'Bandung (BD) - Malang (ML)', time: '23:23' },
+            { id: 52, type: 'berangkat', name: 'Mutiara Selatan', relation: 'Surabaya Gubeng (SGU) - Bandung (BD)', time: '23:47' },
+            { id: 53, type: 'berangkat', name: 'Bogowonto', relation: 'Pasar Senen (PSE) - Lempuyangan (LPN)', time: '23:49' },
+            { id: 54, type: 'berangkat', name: 'Wijayakusuma', relation: 'Ketapang (KTG) - Cilacap (CP)', time: '00:01' },
+            { id: 55, type: 'datang', name: 'Malabar', relation: 'Malang (ML) - Bandung (BD)', time: '00:12' },
+            { id: 56, type: 'datang', name: 'Lodaya', relation: 'Bandung (BD) - Solo Balapan (SLO)', time: '00:12' },
+            { id: 57, type: 'datang', name: 'Senja Utama YK', relation: 'Pasar Senen (PSE) - Yogyakarta (YK)', time: '00:24' },
+            { id: 58, type: 'datang', name: 'Mutiara Selatan', relation: 'Bandung (BD) - Surabaya Gubeng (SGU)', time: '01:07' },
+            { id: 59, type: 'datang', name: 'Bengawan', relation: 'Purwosari (PWS) - Pasar Senen (PSE)', time: '01:28' },
+            { id: 60, type: 'datang', name: 'Jaka Tingkir', relation: 'Solo Balapan (SLO) - Pasar Senen (PSE)', time: '02:10' },
+            { id: 61, type: 'datang', name: 'Mataram', relation: 'Pasar Senen (PSE) - Solo Balapan (SLO)', time: '03:01' },
+            { id: 62, type: 'datang', name: 'Kutojaya Selatan', relation: 'Kiaracondong (KAC) - Kutoarjo (KTA)', time: '03:12' },
+            { id: 63, type: 'datang', name: 'Singasari', relation: 'Pasar Senen (PSE) - Blitar (BL)', time: '03:50' },
+            { id: 64, type: 'datang', name: 'Kahuripan', relation: 'Kiaracondong (KAC) - Blitar (BL)', time: '04:38' },
+            { id: 65, type: 'datang', name: 'Progo', relation: 'Pasar Senen (PSE) - Lempuyangan (LPN)', time: '04:51' },
+            { id: 66, type: 'datang', name: 'Sawunggalih', relation: 'Kutoarjo (KTA) - Pasar Senen (PSE)', time: '07:16' },
+            { id: 67, type: 'datang', name: 'Joglosemarkerto', relation: 'Cilacap (CP) - Yogyakarta (YK)', time: '07:16' },
+            { id: 68, type: 'datang', name: 'Logawa', relation: 'Purwokerto (PWT) - Surabaya Gubeng (SGU)', time: '07:40' },
+            { id: 69, type: 'datang', name: 'Fajar Utama YK', relation: 'Yogyakarta (YK) - Pasar Senen (PSE)', time: '08:33' },
+            { id: 70, type: 'datang', name: 'Joglosemarkerto', relation: 'Solo Balapan (SLO) - Semarang Tawang (SMT)', time: '09:06' },
+            { id: 71, type: 'datang', name: 'Malioboro Ekspres', relation: 'Purwokerto (PWT) - Malang (ML)', time: '09:07' },
+            { id: 72, type: 'datang', name: 'Lodaya', relation: 'Solo Balapan (SLO) - Bandung (BD)', time: '09:34' },
+            { id: 73, type: 'datang', name: 'Bogowonto', relation: 'Lempuyangan (LPN) - Pasar Senen (PSE)', time: '10:01' },
+            { id: 74, type: 'datang', name: 'Ranggajati', relation: 'Cirebon (CN) - Surabaya Gubeng (SGU)', time: '10:01' },
+            { id: 75, type: 'datang', name: 'Kutojaya Selatan', relation: 'Kutoarjo (KTA) - Kiaracondong (KAC)', time: '10:47' },
+            { id: 76, type: 'datang', name: 'Mataram', relation: 'Solo Balapan (SLO) - Pasar Senen (PSE)', time: '11:04' },
+            { id: 77, type: 'datang', name: 'Lodaya', relation: 'Bandung (BD) - Solo Balapan (SLO)', time: '11:42' },
+            { id: 78, type: 'datang', name: 'Pasundan', relation: 'Surabaya Gubeng (SGU) - Kiaracondong (KAC)', time: '11:48' },
+            { id: 79, type: 'datang', name: 'Sawunggalih', relation: 'Pasar Senen (PSE) - Kutoarjo (KTA)', time: '11:53' },
+            { id: 80, type: 'datang', name: 'Joglosemarkerto', relation: 'Yogyakarta (YK) - Cilacap (CP)', time: '11:58' },
+            { id: 81, type: 'datang', name: 'Bangunkarta', relation: 'Jombang (JG) - Pasar Senen (PSE)', time: '12:30' },
+            { id: 82, type: 'datang', name: 'Joglosemarkerto', relation: 'Semarang Tawang (SMT) - Solo Balapan (SLO)', time: '12:47' },
+            { id: 83, type: 'datang', name: 'Fajar Utama YK', relation: 'Pasar Senen (PSE) - Yogyakarta (YK)', time: '13:18' },
+            { id: 84, type: 'datang', name: 'Gajahwong', relation: 'Pasar Senen (PSE) - Lempuyangan (LPN)', time: '14:01' },
+            { id: 85, type: 'datang', name: 'Sancaka Utara', relation: 'Solo Balapan (SLO) - Cilacap (CP)', time: '14:43' },
+            { id: 86, type: 'datang', name: 'Malabar', relation: 'Bandung (BD) - Malang (ML)', time: '15:01' },
+            { id: 87, type: 'datang', name: 'Progo', relation: 'Lempuyangan (LPN) - Pasar Senen (PSE)', time: '15:05' },
+            { id: 88, type: 'datang', name: 'Bengawan', relation: 'Pasar Senen (PSE) - Purwosari (PWS)', time: '15:18' },
+            { id: 89, type: 'datang', name: 'Ranggajati', relation: 'Surabaya Gubeng (SGU) - Cirebon (CN)', time: '16:19' },
+            { id: 90, type: 'datang', name: 'Kertanegara', relation: 'Malang (ML) - Purwokerto (PWT)', time: '16:32' },
+            { id: 91, type: 'datang', name: 'Wijayakusuma', relation: 'Cilacap (CP) - Ketapang (KTG)', time: '16:38' },
+            { id: 92, type: 'datang', name: 'Gayabaru Malam Selatan', relation: 'Pasar Senen (PSE) - Surabaya Gubeng (SGU)', time: '17:12' },
+            { id: 93, type: 'datang', name: 'Jaka Tingkir', relation: 'Pasar Senen (PSE) - Solo Balapan (SLO)', time: '17:22' },
+            { id: 94, type: 'datang', name: 'Pasundan', relation: 'Kiaracondong (KAC) - Surabaya Gubeng (SGU)', time: '17:34' },
+            { id: 95, type: 'datang', name: 'Sancaka Utara', relation: 'Cilacap (CP) - Solo Balapan (SLO)', time: '18:45' },
+            { id: 96, type: 'datang', name: 'Senja Utama YK', relation: 'Yogyakarta (YK) - Pasar Senen (PSE)', time: '19:02' },
+            { id: 97, type: 'datang', name: 'Logawa', relation: 'Surabaya Gubeng (SGU) - Purwokerto (PWT)', time: '19:27' },
+            { id: 98, type: 'datang', name: 'Kertanegara', relation: 'Purwokerto (PWT) - Malang (ML)', time: '19:28' },
+            { id: 99, type: 'datang', name: 'Jayakarta', relation: 'Surabaya Gubeng (SGU) - Pasar Senen (PSE)', time: '20:14' },
+            { id: 100, type: 'datang', name: 'Sawunggalih', relation: 'Kutoarjo (KTA) - Pasar Senen (PSE)', time: '20:59' },
+            { id: 101, type: 'datang', name: 'Lodaya', relation: 'Solo Balapan (SLO) - Bandung (BD)', time: '21:34' },
+            { id: 102, type: 'datang', name: 'Jayakarta', relation: 'Pasar Senen (PSE) - Surabaya Gubeng (SGU)', time: '22:46' },
+            { id: 103, type: 'datang', name: 'Gajahwong', relation: 'Lempuyangan (LPN) - Pasar Senen (PSE)', time: '22:53' },
+            { id: 104, type: 'datang', name: 'Singasari', relation: 'Blitar (BL) - Pasar Senen (PSE)', time: '23:20' },
+            { id: 105, type: 'datang', name: 'Malabar', relation: 'Bandung (BD) - Malang (ML)', time: '23:21' },
+            { id: 106, type: 'datang', name: 'Mutiara Selatan', relation: 'Surabaya Gubeng (SGU) - Bandung (BD)', time: '23:45' },
+            { id: 107, type: 'datang', name: 'Bogowonto', relation: 'Pasar Senen (PSE) - Lempuyangan (LPN)', time: '23:47' },
+            { id: 108, type: 'datang', name: 'Wijayakusuma', relation: 'Surabaya Gubeng (SGU) - Cilacap (CP)', time: '23:59' }
+        ];
+
+        const defaultFacilities = [
+            { id: 1, name: 'Loket Tiket', icon: 'fa-solid fa-ticket' },
+            { id: 2, name: 'Ruang Tunggu Ber-AC', icon: 'fa-solid fa-couch' },
+            { id: 3, name: 'Toilet / WC', icon: 'fa-solid fa-restroom' },
+            { id: 4, name: 'Mushola', icon: 'fa-solid fa-person-praying' },
+            { id: 5, name: 'Area Parkir Luas', icon: 'fa-solid fa-square-parking' },
+            { id: 6, name: 'Galeri ATM', icon: 'fa-solid fa-money-bill-transfer' },
+            { id: 7, name: 'Mini Market', icon: 'fa-solid fa-store' },
+            { id: 8, name: 'Cetak Tiket Mandiri', icon: 'fa-solid fa-print' },
+            { id: 9, name: 'Aksesibilitas (Ramp)', icon: 'fa-solid fa-wheelchair' },
+            { id: 10, name: 'Ruang Laktasi', icon: 'fa-solid fa-baby' }
+        ];
+
+        let appData = {
+            schedules: [...defaultSchedules],
+            facilities: [...defaultFacilities]
+        };
+        let currentJadwalTab = 'berangkat';
+        let searchQuery = '';
+        let isAdminLoggedIn = false;
+        let clockTimer = null;
+        let deferredPrompt = null;
+
+        async function initApp() {
+            setupPWA();
+            loadLocalStorage();
+            renderHomeSchedules();
+            renderJadwal();
+            renderFasilitas();
+            renderAdminData();
+            startBMKGClock();
+
+            if (auth) {
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    setupFirestoreSync();
+                } catch (e) {
+                    console.warn("Auth/Cloud offline mode active:", e);
+                }
+            }
+            
+            document.getElementById('search-jadwal').addEventListener('input', (e) => {
+                searchQuery = e.target.value.toLowerCase();
+                renderJadwal();
+            });
+
+            document.getElementById('form-add-jadwal').addEventListener('submit', handleAddJadwal);
+            document.getElementById('form-add-fasilitas').addEventListener('submit', handleAddFasilitas);
+        }
+
+        function setupPWA() {
+            // Generate Dynamic Web App Manifest Blob URL
+            const manifestData = {
+                name: "Stasiun Gombong (GB)",
+                short_name: "Stasiun Gombong",
+                start_url: window.location.href,
+                display: "standalone",
+                background_color: "#ffffff",
+                theme_color: "#1C3F94",
+                icons: [
+                    {
+                        src: "https://placehold.co/192x192/1C3F94/ffffff?text=GB",
+                        sizes: "192x192",
+                        type: "image/png"
+                    },
+                    {
+                        src: "https://placehold.co/512x512/1C3F94/ffffff?text=GB",
+                        sizes: "512x512",
+                        type: "image/png"
+                    }
+                ]
+            };
+            const stringManifest = JSON.stringify(manifestData);
+            const blob = new Blob([stringManifest], {type: 'application/json'});
+            const manifestURL = URL.createObjectURL(blob);
+            document.getElementById('dynamic-manifest').setAttribute('href', manifestURL);
+
+            // Listen for install prompt event
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                const btn = document.getElementById('install-app-btn');
+                const banner = document.getElementById('install-banner-card');
+                if (btn) btn.style.display = 'block';
+                if (banner) banner.style.display = 'block';
+            });
+
+            window.addEventListener('appinstalled', () => {
+                showToast("Aplikasi Stasiun Gombong berhasil diinstall!");
+                const btn = document.getElementById('install-app-btn');
+                const banner = document.getElementById('install-banner-card');
+                if (btn) btn.style.display = 'none';
+                if (banner) banner.style.display = 'none';
+                deferredPrompt = null;
+            });
+        }
+
+        window.promptInstallApp = async function() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    showToast("Terima kasih telah menginstall aplikasi!");
+                }
+                deferredPrompt = null;
+                const btn = document.getElementById('install-app-btn');
+                const banner = document.getElementById('install-banner-card');
+                if (btn) btn.style.display = 'none';
+                if (banner) banner.style.display = 'none';
+            } else {
+                showToast("Untuk menginstall, buka menu browser Anda lalu pilih 'Tambahkan ke Layar Utama' (Add to Home Screen).");
+            }
+        }
+
+        function startBMKGClock() {
+            if (clockTimer) clearInterval(clockTimer);
+            
+            function updateClock() {
+                const now = new Date();
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                
+                const timeStr = `${hours}:${minutes}:${seconds} WIB`;
+                const clockEl = document.getElementById('bmkg-clock-display');
+                if (clockEl) {
+                    clockEl.textContent = timeStr;
+                }
+                
+                // Keep home schedules updating live every second with real system time
+                renderHomeSchedules();
+            }
+
+            updateClock();
+            clockTimer = setInterval(updateClock, 1000);
+        }
+
+        function loadLocalStorage() {
+            const storedSchedules = localStorage.getItem('gombong_schedules');
+            const storedFacilities = localStorage.getItem('gombong_facilities');
+            if (storedSchedules) {
+                try {
+                    appData.schedules = JSON.parse(storedSchedules);
+                } catch(err) {
+                    appData.schedules = [...defaultSchedules];
+                }
+            } else {
+                appData.schedules = [...defaultSchedules];
+            }
+            
+            if (storedFacilities) {
+                try {
+                    appData.facilities = JSON.parse(storedFacilities);
+                } catch(err) {
+                    appData.facilities = [...defaultFacilities];
+                }
+            } else {
+                appData.facilities = [...defaultFacilities];
+            }
+
+            if (appData.schedules && appData.schedules.length > 0) {
+                appData.schedules.sort((a, b) => (a.time || '00:00').localeCompare(b.time || '00:00'));
+            }
+        }
+
+        function setupFirestoreSync() {
+            if (!db || !auth.currentUser) return;
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'station_data', 'global');
+            
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.schedules) appData.schedules = data.schedules;
+                    if (data.facilities) appData.facilities = data.facilities;
+                    appData.schedules.sort((a, b) => a.time.localeCompare(b.time));
+                } else {
+                    setDoc(docRef, { schedules: defaultSchedules, facilities: defaultFacilities });
+                }
+                renderHomeSchedules();
+                renderJadwal();
+                renderFasilitas();
+                renderAdminData();
+            }, (error) => {
+                console.error("Sync error:", error);
+                loadLocalStorage();
+            });
+        }
+
+        async function saveDataToCloud() {
+            if (auth && auth.currentUser && db) {
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'station_data', 'global');
+                    await setDoc(docRef, {
+                        schedules: appData.schedules,
+                        facilities: appData.facilities
+                    });
+                } catch (e) {
+                    console.error("Cloud save failed, saving local", e);
+                    localStorage.setItem('gombong_schedules', JSON.stringify(appData.schedules));
+                    localStorage.setItem('gombong_facilities', JSON.stringify(appData.facilities));
+                }
+            } else {
+                localStorage.setItem('gombong_schedules', JSON.stringify(appData.schedules));
+                localStorage.setItem('gombong_facilities', JSON.stringify(appData.facilities));
+            }
+        }
+
+        window.openAdminPortal = function() {
+            if (isAdminLoggedIn) {
+                switchPage('admin');
+            } else {
+                document.getElementById('login-modal').style.display = 'flex';
+            }
+        }
+
+        window.closeAdminPortal = function() {
+            document.getElementById('login-modal').style.display = 'none';
+        }
+
+        window.handleLogin = function(e) {
+            e.preventDefault();
+            const u = document.getElementById('login-username').value.trim();
+            const p = document.getElementById('login-password').value.trim();
+
+            if (u === 'stasiungb' && p === 'stasiungb') {
+                isAdminLoggedIn = true;
+                closeAdminPortal();
+                document.getElementById('form-login').reset();
+                switchPage('admin');
+                showToast("Login admin berhasil!");
+            } else {
+                showToast("Username atau Password salah!");
+            }
+        }
+
+        window.handleLogout = function() {
+            isAdminLoggedIn = false;
+            switchPage('home');
+            showToast("Berhasil keluar dari sesi admin.");
+        }
+
+        window.resetData = function() {
+            if(confirm("Apakah Anda yakin ingin mereset semua data ke pengaturan awal?")) {
+                appData.schedules = [...defaultSchedules];
+                appData.facilities = [...defaultFacilities];
+                saveDataToCloud();
+                renderHomeSchedules();
+                renderJadwal();
+                renderFasilitas();
+                renderAdminData();
+                showToast("Data berhasil dikembalikan ke semula!");
+            }
+        }
+
+        function renderHomeSchedules() {
+            const container = document.getElementById('home-schedule-container');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            if (!appData.schedules || appData.schedules.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500 italic text-center py-2">Tidak ada jadwal tersimpan.</p>';
+                return;
+            }
+
+            const now = new Date();
+            const currentTotalMinutes = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+            
+            const departures = appData.schedules.filter(s => s && s.type === 'berangkat');
+            
+            departures.forEach(s => {
+                const scheduleMinutes = timeToMinutes(s.time || '00:00');
+                let diff = scheduleMinutes - currentTotalMinutes;
+                if (diff < 0) diff += 1440;
+                s._diff = diff;
+            });
+
+            departures.sort((a, b) => a._diff - b._diff);
+            
+            const nearestDepartures = departures.slice(0, 3);
+            if (nearestDepartures.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500 italic text-center py-2">Tidak ada keberangkatan terdekat.</p>';
+                return;
+            }
+
+            nearestDepartures.forEach(schedule => {
+                const totalMinsLeft = Math.floor(schedule._diff);
+                const hoursLeft = Math.floor(totalMinsLeft / 60);
+                const minsLeft = totalMinsLeft % 60;
+                let countdownText = '';
+                if (hoursLeft > 0) {
+                    countdownText = `${hoursLeft} jam ${minsLeft} mnt lagi`;
+                } else if (minsLeft > 0) {
+                    countdownText = `${minsLeft} menit lagi`;
+                } else {
+                    countdownText = `Segera berangkat`;
+                }
+
+                container.innerHTML += `
+                    <div class="flex items-center justify-between border-b pb-2.5 last:border-0 last:pb-0">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1 text-kai-blue font-bold text-sm min-w-[60px] text-center shadow-sm">
+                                ${schedule.time}
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <p class="font-bold text-sm text-gray-800">${schedule.name}</p>
+                                    <span class="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full font-medium">${countdownText}</span>
+                                </div>
+                                <p class="text-xs text-gray-500 truncate max-w-[200px] sm:max-w-[260px]">Relasi: ${schedule.relation}</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+                    </div>
+                `;
+            });
+        }
+
+        function timeToMinutes(timeStr) {
+            if (!timeStr || !timeStr.includes(':')) return 0;
+            const parts = timeStr.split(':');
+            return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+        }
+
+        function renderJadwal() {
+            const tbody = document.getElementById('tbody-jadwal');
+            tbody.innerHTML = '';
+            
+            let filtered = appData.schedules.filter(s => s.type === currentJadwalTab);
+            if (searchQuery) {
+                filtered = filtered.filter(s => 
+                    s.name.toLowerCase().includes(searchQuery) || 
+                    s.relation.toLowerCase().includes(searchQuery)
+                );
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-gray-500">Jadwal tidak ditemukan</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(s => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="font-medium text-gray-800">${s.name}</td>
+                    <td class="text-gray-600 text-xs sm:text-sm">${s.relation}</td>
+                    <td class="text-right font-bold text-kai-blue">${s.time}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderFasilitas() {
+            const container = document.getElementById('fasilitas-container');
+            container.innerHTML = '';
+            
+            appData.facilities.forEach(f => {
+                container.innerHTML += `
+                    <div class="card flex flex-col items-center justify-center text-center !p-4 !mb-0 h-full">
+                        <div class="w-12 h-12 bg-gray-50 text-kai-orange rounded-full flex items-center justify-center text-xl mb-2">
+                            <i class="${f.icon}"></i>
+                        </div>
+                        <span class="text-xs font-semibold text-gray-700">${f.name}</span>
+                    </div>
+                `;
+            });
+        }
+
+        function renderAdminData() {
+            const tbodyJadwal = document.getElementById('admin-tbody-jadwal');
+            tbodyJadwal.innerHTML = '';
+            
+            appData.schedules.forEach(s => {
+                tbodyJadwal.innerHTML += `
+                    <tr>
+                        <td class="text-xs">
+                            <span class="${s.type === 'berangkat' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'} px-1 rounded text-[10px] mr-1 uppercase">${s.type === 'berangkat' ? 'B' : 'D'}</span>
+                            ${s.name}
+                        </td>
+                        <td class="text-xs truncate max-w-[120px]">${s.relation}</td>
+                        <td class="text-xs font-mono">${s.time}</td>
+                        <td class="text-right">
+                            <button onclick="deleteSchedule(${s.id})" class="text-red-500 hover:bg-red-50 p-1 rounded"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            const listFasilitas = document.getElementById('admin-list-fasilitas');
+            listFasilitas.innerHTML = '';
+            
+            appData.facilities.forEach(f => {
+                listFasilitas.innerHTML += `
+                    <div class="flex items-center justify-between p-2 bg-white border rounded shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <i class="${f.icon} text-kai-blue w-6 text-center"></i>
+                            <span class="text-sm font-medium">${f.name}</span>
+                        </div>
+                        <button onclick="deleteFacility(${f.id})" class="text-red-500 hover:bg-red-50 p-1 rounded"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+            });
+        }
+
+        function handleAddJadwal(e) {
+            e.preventDefault();
+            const name = document.getElementById('add-ka-nama').value;
+            const type = document.getElementById('add-ka-jenis').value;
+            const relation = document.getElementById('add-ka-relasi').value;
+            const time = document.getElementById('add-ka-jam').value;
+            
+            const newId = appData.schedules.length > 0 ? Math.max(...appData.schedules.map(s => s.id)) + 1 : 1;
+            
+            appData.schedules.push({ id: newId, type, name, relation, time });
+            appData.schedules.sort((a, b) => a.time.localeCompare(b.time));
+            saveDataToCloud();
+            
+            document.getElementById('form-add-jadwal').reset();
+            renderAdminData();
+            renderJadwal();
+            renderHomeSchedules();
+            showToast("Jadwal berhasil ditambahkan & disinkronkan!");
+        }
+
+        function handleAddFasilitas(e) {
+            e.preventDefault();
+            const name = document.getElementById('add-fas-nama').value;
+            const icon = document.getElementById('add-fas-icon').value;
+            
+            const newId = appData.facilities.length > 0 ? Math.max(...appData.facilities.map(f => f.id)) + 1 : 1;
+            appData.facilities.push({ id: newId, name, icon });
+            
+            saveDataToCloud();
+            document.getElementById('form-add-fasilitas').reset();
+            renderAdminData();
+            renderFasilitas();
+            showToast("Fasilitas berhasil ditambahkan & disinkronkan!");
+        }
+
+        window.deleteSchedule = function(id) {
+            if(confirm("Hapus jadwal ini?")) {
+                appData.schedules = appData.schedules.filter(s => s.id !== id);
+                saveDataToCloud();
+                renderAdminData();
+                renderJadwal();
+                renderHomeSchedules();
+                showToast("Jadwal berhasil dihapus.");
+            }
+        }
+
+        window.deleteFacility = function(id) {
+            if(confirm("Hapus fasilitas ini?")) {
+                appData.facilities = appData.facilities.filter(f => f.id !== id);
+                saveDataToCloud();
+                renderAdminData();
+                renderFasilitas();
+                showToast("Fasilitas berhasil dihapus.");
+            }
+        }
+
+        window.switchPage = function(pageId) {
+            if (pageId === 'admin' && !isAdminLoggedIn) {
+                openAdminPortal();
+                return;
+            }
+
+            document.querySelectorAll('.page-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(`page-${pageId}`).classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            const navEl = document.getElementById(`nav-${pageId}`);
+            if (navEl) navEl.classList.add('active');
+            
+            window.scrollTo(0, 0);
+        }
+
+        window.switchTab = function(type) {
+            currentJadwalTab = type;
+            if(type === 'berangkat') {
+                document.getElementById('btn-tab-berangkat').className = 'flex-1 py-2 text-sm font-medium rounded-md bg-white text-kai-blue shadow-sm';
+                document.getElementById('btn-tab-datang').className = 'flex-1 py-2 text-sm font-medium rounded-md text-gray-600';
+            } else {
+                document.getElementById('btn-tab-datang').className = 'flex-1 py-2 text-sm font-medium rounded-md bg-white text-kai-blue shadow-sm';
+                document.getElementById('btn-tab-berangkat').className = 'flex-1 py-2 text-sm font-medium rounded-md text-gray-600';
+            }
+            renderJadwal();
+        }
+
+        window.switchAdminTab = function(type) {
+            if (type === 'jadwal') {
+                document.getElementById('admin-jadwal-section').style.display = 'block';
+                document.getElementById('admin-fasilitas-section').style.display = 'none';
+                document.getElementById('btn-admin-jadwal').className = 'flex-1 py-2 text-sm font-medium rounded-md bg-white text-kai-blue shadow-sm';
+                document.getElementById('btn-admin-fasilitas').className = 'flex-1 py-2 text-sm font-medium rounded-md text-gray-600';
+            } else {
+                document.getElementById('admin-jadwal-section').style.display = 'none';
+                document.getElementById('admin-fasilitas-section').style.display = 'block';
+                document.getElementById('btn-admin-fasilitas').className = 'flex-1 py-2 text-sm font-medium rounded-md bg-white text-kai-blue shadow-sm';
+                document.getElementById('btn-admin-jadwal').className = 'flex-1 py-2 text-sm font-medium rounded-md text-gray-600';
+            }
+        }
+
+        window.downloadMock = function(filename) {
+            showToast(`Mengunduh dokumen: ${filename}...`);
+            setTimeout(() => showToast(`Unduhan ${filename} selesai.`), 2000);
+        }
+
+        window.copyToClipboard = function(text) {
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            showToast("Disalin ke papan klip!");
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.textContent = message;
+            toast.className = "show";
+            setTimeout(() => toast.className = toast.className.replace("show", ""), 3000);
+        }
+
+        window.onload = initApp;
+    </script>
+
+<div id="update-badge">Update v2<small>Stasiun Gombong Web App</small></div>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
