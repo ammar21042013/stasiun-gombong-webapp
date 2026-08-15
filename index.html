@@ -224,6 +224,7 @@
         }
     </style>
 
+<!-- Admin login diarahkan ke admin-login.html dan menggunakan Firebase Authentication. -->
 <meta name="application-name" content="Stasiun Gombong (GB)">
 <meta name="theme-color" content="#1C3F94">
 <meta name="description" content="Web App Stasiun Gombong (GB) Daop 5 Purwokerto">
@@ -248,7 +249,7 @@
                     </span>
                     <span id="cloud-status" class="text-[10px] bg-emerald-500/20 text-emerald-200 px-2 py-0.5 rounded-full"><i class="fa-solid fa-cloud"></i> Online</span>
                     <i class="fa-solid fa-bell"></i>
-                    <i class="fa-solid fa-gear" onclick="openAdminPortal()"></i>
+                    <i class="fa-solid fa-gear" onclick="window.location.href='admin-login.html'" title="Login Admin"></i>
                 </div>
             </div>
             <div class="mt-2">
