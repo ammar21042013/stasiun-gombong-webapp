@@ -943,7 +943,7 @@
         let appData = {
             schedules: [...defaultSchedules],
             facilities: [...defaultFacilities],
-            layoutImage: DEFAULT_LAYOUT_IMAGE
+            layoutImage: ''
         };
         let currentJadwalTab = 'berangkat';
         let searchQuery = '';
@@ -1092,6 +1092,9 @@
             } else {
                 appData.facilities = [...defaultFacilities];
             }
+
+            const savedLayout = localStorage.getItem('gombong_layout_image');
+            if (savedLayout) appData.layoutImage = savedLayout;
 
             if (appData.schedules && appData.schedules.length > 0) {
                 appData.schedules.sort((a, b) => (a.time || '00:00').localeCompare(b.time || '00:00'));
