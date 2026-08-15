@@ -1,98 +1,970 @@
-;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px}label{display:block;font-weight:bold;margin-bottom:7px}input,select{width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;font-size:15px}.form-actions,.actions{display:flex;gap:10px;flex-wrap:wrap}.form-actions{margin-top:18px}#formCard,#page{display:none}
-.schedule{border:1px solid #e1e5e9;border-radius:14px;padding:16px;margin-bottom:12px}.schedule-header{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.schedule h3{margin:0 0 5px}.schedule p{margin:5px 0;color:#666}
-.schedule-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:12px}.info-item{background:#f7f8fa;border-radius:10px;padding:10px}.info-label{display:block;font-size:12px;color:#777;margin-bottom:4px}.info-value{font-weight:bold}
-.actions{margin-top:12px}.empty,.loading{text-align:center;padding:30px;color:#777}.loading{padding:50px}.status{display:inline-block;padding:5px 9px;border-radius:20px;font-size:12px;background:#e7f7ed;color:#16743a}.inactive{background:#ffe8e8;color:#b00020}
-.notice{background:#eef5ff;color:#174a9c;border-radius:10px;padding:11px 13px;margin-bottom:18px;font-size:13px}
-@media(max-width:600px){.container{padding:15px}.header{padding:16px}.header h1{font-size:20px}.card{padding:18px}.form-actions button{width:100%}}
-</style>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Kelola Jadwal Kereta - Admin</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      color: #222;
+    }
+
+    .header {
+      background: #1464f4;
+      color: white;
+      padding: 18px 20px;
+    }
+
+    .header-content {
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .header p {
+      margin: 5px 0 0;
+      opacity: 0.9;
+      font-size: 14px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1100px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 11px 15px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .primary {
+      background: #1464f4;
+      color: white;
+    }
+
+    .secondary {
+      background: #e9edf2;
+      color: #222;
+    }
+
+    .danger {
+      background: #d93025;
+      color: white;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+    }
+
+    .notice {
+      background: #eef5ff;
+      color: #174a9c;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 7px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 15px;
+      background: white;
+    }
+
+    .form-actions {
+      margin-top: 18px;
+      display: flex;
+      gap: 10px;
+    }
+
+    #formCard {
+      display: none;
+    }
+
+    .schedule {
+      border: 1px solid #e1e5e9;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 12px;
+      background: white;
+    }
+
+    .schedule-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .schedule h3 {
+      margin: 0 0 5px;
+    }
+
+    .schedule p {
+      margin: 5px 0;
+      color: #666;
+    }
+
+    .schedule-info {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .info-item {
+      background: #f7f8fa;
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .info-label {
+      display: block;
+      font-size: 12px;
+      color: #777;
+      margin-bottom: 4px;
+    }
+
+    .info-value {
+      font-weight: bold;
+    }
+
+    .actions {
+      margin-top: 12px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 30px;
+      color: #777;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 50px;
+    }
+
+    #page {
+      display: none;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 20px;
+      font-size: 12px;
+      background: #e7f7ed;
+      color: #16743a;
+    }
+
+    .inactive {
+      background: #ffe8e8;
+      color: #b00020;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 15px;
+      }
+
+      .header {
+        padding: 16px;
+      }
+
+      .header h1 {
+        font-size: 20px;
+      }
+
+      .card {
+        padding: 18px;
+      }
+
+      .form-actions {
+        flex-direction: column;
+      }
+
+      .form-actions button {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
+
 <body>
-<div id="loading" class="loading">Memeriksa akses admin...</div>
-<div id="page">
-<header class="header"><div class="header-content"><h1>Kelola Jadwal Kereta</h1><p>Stasiun Kelas 1 Gombong</p></div></header>
-<main class="container">
-<div class="topbar">
-<button class="secondary" onclick="location.href='admin.html'">← Dashboard</button>
-<button class="primary" onclick="showAddForm()">+ Tambah Jadwal</button>
-</div>
-<div class="notice">Jadwal disimpan pada sumber data utama <strong>station_data/global</strong> agar perubahan dapat digunakan website utama.</div>
-<div id="formCard" class="card">
-<h2 id="formTitle">Tambah Jadwal</h2>
-<form id="scheduleForm">
-<div class="form-grid">
-<div><label for="trainName">Nama Kereta</label><input id="trainName" required placeholder="Contoh: Sawunggalih"></div>
-<div><label for="trainNumber">Nomor Kereta</label><input id="trainNumber" required placeholder="Contoh: 74"></div>
-<div><label for="relation">Relasi</label><input id="relation" required placeholder="Contoh: Kutoarjo - Pasar Senen"></div>
-<div><label for="arrival">Kedatangan</label><input id="arrival" type="time"></div>
-<div><label for="departure">Keberangkatan</label><input id="departure" type="time" required></div>
-<div><label for="status">Status</label><select id="status"><option>Beroperasi</option><option>Berubah</option><option>Dibatalkan</option></select></div>
-<div><label for="active">Aktif</label><select id="active"><option value="true">Ya</option><option value="false">Tidak</option></select></div>
-</div>
-<div class="form-actions"><button id="saveButton" type="submit" class="primary">Simpan</button><button type="button" class="secondary" onclick="hideForm()">Batal</button></div>
-</form>
-</div>
-<div class="card"><h2>Daftar Jadwal</h2><div id="scheduleList">Memuat jadwal...</div></div>
-</main></div>
 
-<script src="firebase-config.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script>
-firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth(),db=firebase.firestore();
-const APP_ID="stasiun-gombong-gb";
-const stationRef=db.collection("artifacts").doc(APP_ID).collection("public").doc("data").collection("station_data").doc("global");
-let editingId=null,schedules=[];
+  <div id="loading" class="loading">
+    Memeriksa akses admin...
+  </div>
 
-auth.onAuthStateChanged(async user=>{
- if(!user){location.href="admin-login.html";return}
- try{
-  const a=await db.collection("admins").doc(user.uid).get();
-  if(!a.exists||a.data().role!=="admin"){await auth.signOut();location.href="admin-login.html";return}
-  document.getElementById("loading").style.display="none";
-  document.getElementById("page").style.display="block";
-  await loadSchedules();
- }catch(e){console.error(e);await auth.signOut();location.href="admin-login.html"}
-});
+  <div id="page">
 
-async function loadSchedules(){
- const list=document.getElementById("scheduleList");list.textContent="Memuat jadwal...";
- try{
-  const s=await stationRef.get(),d=s.exists?s.data():{};
-  schedules=Array.isArray(d.schedules)?d.schedules:[];
-  schedules.sort((a,b)=>String(a.departure||a.time||"99:99").localeCompare(String(b.departure||b.time||"99:99")));
-  renderSchedules();
- }catch(e){console.error(e);list.innerHTML="<p>Gagal memuat jadwal: "+escapeHtml(e.message)+"</p>"}
-}
-function renderSchedules(){
- const list=document.getElementById("scheduleList");
- if(!schedules.length){list.innerHTML='<div class="empty">Belum ada jadwal.</div>';return}
- list.innerHTML="";
- schedules.forEach((d,i)=>{
-  const n=d.trainName||d.name||"-",num=d.trainNumber||"-",rel=d.relation||"-",arr=d.arrival||"-",dep=d.departure||d.time||"-",st=d.status||"Beroperasi",act=d.active!==false;
-  const el=document.createElement("div");el.className="schedule";
-  el.innerHTML=`<div class="schedule-header"><div><h3>${escapeHtml(n)}</h3><p>Nomor Kereta: ${escapeHtml(num)}</p></div><span class="status ${act?"":"inactive"}">${act?escapeHtml(st):"Tidak Aktif"}</span></div>
-  <div class="schedule-info">
-  <div class="info-item"><span class="info-label">Nama Kereta</span><span class="info-value">${escapeHtml(n)}</span></div>
-  <div class="info-item"><span class="info-label">Nomor Kereta</span><span class="info-value">${escapeHtml(num)}</span></div>
-  <div class="info-item"><span class="info-label">Relasi</span><span class="info-value">${escapeHtml(rel)}</span></div>
-  <div class="info-item"><span class="info-label">Kedatangan</span><span class="info-value">${escapeHtml(arr)}</span></div>
-  <div class="info-item"><span class="info-label">Keberangkatan</span><span class="info-value">${escapeHtml(dep)}</span></div></div>
-  <div class="actions"><button class="primary" onclick="editSchedule(${i})">Edit</button><button class="danger" onclick="deleteSchedule(${i})">Hapus</button></div>`;
-  list.appendChild(el);
- });
-}
-function showAddForm(){editingId=null;document.getElementById("formTitle").textContent="Tambah Jadwal";document.getElementById("scheduleForm").reset();document.getElementById("active").value="true";document.getElementById("status").value="Beroperasi";document.getElementById("formCard").style.display="block";scrollTo({top:0,behavior:"smooth"})}
-function hideForm(){editingId=null;document.getElementById("formCard").style.display="none";document.getElementById("scheduleForm").reset()}
-document.getElementById("scheduleForm").addEventListener("submit",async e=>{
- e.preventDefault();const b=document.getElementById("saveButton");b.disabled=true;b.textContent="Menyimpan...";
- const d={id:editingId!==null?(schedules[editingId].id||String(Date.now())):"schedule-"+Date.now(),type:"berangkat",trainName:trainName.value.trim(),trainNumber:trainNumber.value.trim(),name:trainName.value.trim(),relation:relation.value.trim(),arrival:arrival.value,departure:departure.value,time:departure.value,status:status.value,active:active.value==="true"};
- try{if(editingId!==null)schedules[editingId]=d;else schedules.push(d);await stationRef.set({schedules},{merge:true});alert(editingId!==null?"Jadwal berhasil diperbarui.":"Jadwal berhasil ditambahkan.");hideForm();await loadSchedules()}catch(e){console.error(e);alert("Gagal menyimpan jadwal: "+e.message);await loadSchedules()}finally{b.disabled=false;b.textContent="Simpan"}
-});
-function editSchedule(i){const d=schedules[i];if(!d){alert("Data jadwal tidak ditemukan.");return}editingId=i;formTitle.textContent="Edit Jadwal";trainName.value=d.trainName||d.name||"";trainNumber.value=d.trainNumber||"";relation.value=d.relation||"";arrival.value=d.arrival||"";departure.value=d.departure||d.time||"";status.value=d.status||"Beroperasi";active.value=d.active===false?"false":"true";formCard.style.display="block";scrollTo({top:0,behavior:"smooth"})}
-async function deleteSchedule(i){const d=schedules[i];if(!d)return;if(!confirm("Apakah Anda yakin ingin menghapus "+(d.trainName||d.name||"jadwal ini")+"?"))return;try{schedules.splice(i,1);await stationRef.set({schedules},{merge:true});alert("Jadwal berhasil dihapus.");await loadSchedules()}catch(e){console.error(e);alert("Gagal menghapus jadwal: "+e.message);await loadSchedules()}}
-function escapeHtml(v){return String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}
-</script>
+    <header class="header">
+      <div class="header-content">
+        <h1>Kelola Jadwal Kereta</h1>
+        <p>Stasiun Kelas 1 Gombong</p>
+      </div>
+    </header>
+
+    <main class="container">
+
+      <div class="topbar">
+
+        <button
+          type="button"
+          class="secondary"
+          onclick="window.location.href='admin.html'">
+          ← Dashboard
+        </button>
+
+        <button
+          type="button"
+          class="primary"
+          onclick="showAddForm()">
+          + Tambah Jadwal
+        </button>
+
+      </div>
+
+      <div class="notice">
+        Jadwal disimpan pada sumber data utama
+        <strong>station_data/global</strong>.
+      </div>
+
+      <div id="formCard" class="card">
+
+        <h2 id="formTitle">Tambah Jadwal</h2>
+
+        <form id="scheduleForm">
+
+          <div class="form-grid">
+
+            <div>
+              <label for="trainName">Nama Kereta</label>
+              <input
+                id="trainName"
+                type="text"
+                placeholder="Contoh: Sawunggalih"
+                required>
+            </div>
+
+            <div>
+              <label for="trainNumber">Nomor Kereta</label>
+              <input
+                id="trainNumber"
+                type="text"
+                placeholder="Contoh: 74"
+                required>
+            </div>
+
+            <div>
+              <label for="relation">Relasi</label>
+              <input
+                id="relation"
+                type="text"
+                placeholder="Contoh: Kutoarjo - Pasar Senen"
+                required>
+            </div>
+
+            <div>
+              <label for="arrival">Kedatangan</label>
+              <input
+                id="arrival"
+                type="time">
+            </div>
+
+            <div>
+              <label for="departure">Keberangkatan</label>
+              <input
+                id="departure"
+                type="time"
+                required>
+            </div>
+
+            <div>
+              <label for="status">Status</label>
+              <select id="status">
+                <option value="Beroperasi">Beroperasi</option>
+                <option value="Berubah">Berubah</option>
+                <option value="Dibatalkan">Dibatalkan</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="active">Aktif</label>
+              <select id="active">
+                <option value="true">Ya</option>
+                <option value="false">Tidak</option>
+              </select>
+            </div>
+
+          </div>
+
+          <div class="form-actions">
+
+            <button
+              id="saveButton"
+              type="submit"
+              class="primary">
+              Simpan
+            </button>
+
+            <button
+              type="button"
+              class="secondary"
+              onclick="hideForm()">
+              Batal
+            </button>
+
+          </div>
+
+        </form>
+
+      </div>
+
+      <div class="card">
+
+        <h2>Daftar Jadwal</h2>
+
+        <div id="scheduleList">
+          Memuat jadwal...
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <script src="firebase-config.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script>
+    firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    /*
+     * PENTING:
+     * Gunakan lokasi data yang sama dengan website utama.
+     */
+    const APP_ID = "stasiun-gombong-gb";
+
+    const stationRef = db
+      .collection("artifacts")
+      .doc(APP_ID)
+      .collection("public")
+      .doc("data")
+      .collection("station_data")
+      .doc("global");
+
+    let editingIndex = null;
+    let schedules = [];
+
+    /*
+     * CEK LOGIN ADMIN
+     */
+    auth.onAuthStateChanged(async function(user) {
+
+      if (!user) {
+        window.location.href = "admin-login.html";
+        return;
+      }
+
+      try {
+
+        const adminDoc = await db
+          .collection("admins")
+          .doc(user.uid)
+          .get();
+
+        if (
+          !adminDoc.exists ||
+          adminDoc.data().role !== "admin"
+        ) {
+          await auth.signOut();
+          window.location.href = "admin-login.html";
+          return;
+        }
+
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("page").style.display = "block";
+
+        await loadSchedules();
+
+      } catch (error) {
+
+        console.error(error);
+
+        await auth.signOut();
+
+        window.location.href = "admin-login.html";
+      }
+    });
+
+    /*
+     * AMBIL JADWAL DARI FIRESTORE
+     */
+    async function loadSchedules() {
+
+      const list = document.getElementById("scheduleList");
+
+      list.textContent = "Memuat jadwal...";
+
+      try {
+
+        const doc = await stationRef.get();
+
+        if (!doc.exists) {
+          schedules = [];
+        } else {
+
+          const data = doc.data();
+
+          schedules =
+            Array.isArray(data.schedules)
+              ? data.schedules
+              : [];
+        }
+
+        schedules.sort(function(a, b) {
+
+          const timeA =
+            a.departure ||
+            a.time ||
+            "99:99";
+
+          const timeB =
+            b.departure ||
+            b.time ||
+            "99:99";
+
+          return timeA.localeCompare(timeB);
+        });
+
+        renderSchedules();
+
+      } catch (error) {
+
+        console.error(error);
+
+        list.innerHTML =
+          "<p>Gagal memuat jadwal: " +
+          escapeHtml(error.message) +
+          "</p>";
+      }
+    }
+
+    /*
+     * TAMPILKAN JADWAL
+     */
+    function renderSchedules() {
+
+      const list =
+        document.getElementById("scheduleList");
+
+      if (schedules.length === 0) {
+
+        list.innerHTML =
+          '<div class="empty">Belum ada jadwal.</div>';
+
+        return;
+      }
+
+      list.innerHTML = "";
+
+      schedules.forEach(function(data, index) {
+
+        const trainName =
+          data.trainName ||
+          data.name ||
+          "-";
+
+        const trainNumber =
+          data.trainNumber ||
+          "-";
+
+        const relation =
+          data.relation ||
+          "-";
+
+        const arrival =
+          data.arrival ||
+          "-";
+
+        const departure =
+          data.departure ||
+          data.time ||
+          "-";
+
+        const status =
+          data.status ||
+          "Beroperasi";
+
+        const active =
+          data.active !== false;
+
+        const schedule =
+          document.createElement("div");
+
+        schedule.className = "schedule";
+
+        schedule.innerHTML = `
+
+          <div class="schedule-header">
+
+            <div>
+
+              <h3>
+                ${escapeHtml(trainName)}
+              </h3>
+
+              <p>
+                Nomor Kereta:
+                ${escapeHtml(trainNumber)}
+              </p>
+
+            </div>
+
+            <span class="status ${
+              active ? "" : "inactive"
+            }">
+
+              ${
+                active
+                  ? escapeHtml(status)
+                  : "Tidak Aktif"
+              }
+
+            </span>
+
+          </div>
+
+          <div class="schedule-info">
+
+            <div class="info-item">
+              <span class="info-label">
+                Nama Kereta
+              </span>
+
+              <span class="info-value">
+                ${escapeHtml(trainName)}
+              </span>
+            </div>
+
+            <div class="info-item">
+              <span class="info-label">
+                Nomor Kereta
+              </span>
+
+              <span class="info-value">
+                ${escapeHtml(trainNumber)}
+              </span>
+            </div>
+
+            <div class="info-item">
+              <span class="info-label">
+                Relasi
+              </span>
+
+              <span class="info-value">
+                ${escapeHtml(relation)}
+              </span>
+            </div>
+
+            <div class="info-item">
+              <span class="info-label">
+                Kedatangan
+              </span>
+
+              <span class="info-value">
+                ${escapeHtml(arrival)}
+              </span>
+            </div>
+
+            <div class="info-item">
+              <span class="info-label">
+                Keberangkatan
+              </span>
+
+              <span class="info-value">
+                ${escapeHtml(departure)}
+              </span>
+            </div>
+
+          </div>
+
+          <div class="actions">
+
+            <button
+              type="button"
+              class="primary"
+              onclick="editSchedule(${index})">
+              Edit
+            </button>
+
+            <button
+              type="button"
+              class="danger"
+              onclick="deleteSchedule(${index})">
+              Hapus
+            </button>
+
+          </div>
+        `;
+
+        list.appendChild(schedule);
+      });
+    }
+
+    /*
+     * FORM TAMBAH
+     */
+    function showAddForm() {
+
+      editingIndex = null;
+
+      document.getElementById("formTitle").textContent =
+        "Tambah Jadwal";
+
+      document.getElementById("scheduleForm").reset();
+
+      document.getElementById("status").value =
+        "Beroperasi";
+
+      document.getElementById("active").value =
+        "true";
+
+      document.getElementById("formCard").style.display =
+        "block";
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
+    }
+
+    /*
+     * TUTUP FORM
+     */
+    function hideForm() {
+
+      editingIndex = null;
+
+      document.getElementById("formCard").style.display =
+        "none";
+
+      document.getElementById("scheduleForm").reset();
+    }
+
+    /*
+     * SIMPAN / UPDATE
+     */
+    document
+      .getElementById("scheduleForm")
+      .addEventListener("submit", async function(event) {
+
+        event.preventDefault();
+
+        const saveButton =
+          document.getElementById("saveButton");
+
+        saveButton.disabled = true;
+        saveButton.textContent = "Menyimpan...";
+
+        const trainName =
+          document.getElementById("trainName").value.trim();
+
+        const trainNumber =
+          document.getElementById("trainNumber").value.trim();
+
+        const relation =
+          document.getElementById("relation").value.trim();
+
+        const arrival =
+          document.getElementById("arrival").value;
+
+        const departure =
+          document.getElementById("departure").value;
+
+        const status =
+          document.getElementById("status").value;
+
+        const active =
+          document.getElementById("active").value === "true";
+
+        const scheduleData = {
+
+          id:
+            editingIndex !== null &&
+            schedules[editingIndex] &&
+            schedules[editingIndex].id
+              ? schedules[editingIndex].id
+              : "schedule-" + Date.now(),
+
+          type: "berangkat",
+
+          trainName: trainName,
+
+          trainNumber: trainNumber,
+
+          name: trainName,
+
+          relation: relation,
+
+          arrival: arrival,
+
+          departure: departure,
+
+          time: departure,
+
+          status: status,
+
+          active: active
+        };
+
+        try {
+
+          if (editingIndex !== null) {
+
+            schedules[editingIndex] =
+              scheduleData;
+
+          } else {
+
+            schedules.push(scheduleData);
+          }
+
+          await stationRef.set(
+            {
+              schedules: schedules
+            },
+            {
+              merge: true
+            }
+          );
+
+          alert(
+            editingIndex !== null
+              ? "Jadwal berhasil diperbarui."
+              : "Jadwal berhasil ditambahkan."
+          );
+
+          hideForm();
+
+          await loadSchedules();
+
+        } catch (error) {
+
+          console.error(error);
+
+          alert(
+            "Gagal menyimpan jadwal: " +
+            error.message
+          );
+
+          await loadSchedules();
+
+        } finally {
+
+          saveButton.disabled = false;
+          saveButton.textContent = "Simpan";
+        }
+      });
+
+    /*
+     * EDIT
+     */
+    function editSchedule(index) {
+
+      const data =
+        schedules[index];
+
+      if (!data) {
+
+        alert(
+          "Data jadwal tidak ditemukan."
+        );
+
+        return;
+      }
+
+      editingIndex = index;
+
+      document.getElementById("formTitle").textContent =
+        "Edit Jadwal";
+
+      document.getElementById("trainName").value =
+        data.trainName ||
+        data.name ||
+        "";
+
+      document.getElementById("trainNumber").value =
+        data.trainNumber ||
+        "";
+
+      document.getElementById("relation").value =
+        data.relation ||
+        "";
+
+      document.getElementById("arrival").value =
+        data.arrival ||
+        "";
+
+      document.getElementById("departure").value =
+        data.departure ||
+        data.time ||
+        "";
+
+      document.getElementById("status").value =
+        data.status ||
+        "Beroperasi";
+
+      document.getElementById("active").value =
+        data.active === false
+          ? "false"
+          : "true";
+
+      document.getElementById("formCard").style.display =
+        "block";
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
+    }
+
+    /*
+     * HAPUS
+     */
+    async function deleteSchedule(index) {
+
+      const data =
+        schedules[index];
+
+      if (!data) {
+        return;
+      }
+
+      const trainName =
+        data.trainName ||
+        data.name ||
+        "jadwal ini";
+
+      const confirmed =
+        confirm(
+          "Apakah Anda yakin ingin menghapus " +
+          trainName +
+          "?"
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+
+        schedules.splice(index, 1);
+
+        await stationRef.set(
+          {
+            schedules: schedules
+          },
+          {
+            merge: true
+          }
+        );
+
+        alert(
+          "Jadwal berhasil dihapus."
+        );
+
+        await loadSchedules();
+
+      } catch (error) {
+
+        console.error(error);
+
+        alert(
+          "Gagal menghapus jadwal: " +
+          error.message
+        );
+
+        await loadSchedules();
+      }
+    }
+
+    /*
+     * PENGAMAN OUTPUT HTML
+     */
+    function escapeHtml(value) {
+
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+
 </body>
 </html>
