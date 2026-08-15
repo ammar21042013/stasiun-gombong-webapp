@@ -68,11 +68,23 @@
       gap: 15px;
     }
 
+    /* KARTU DASHBOARD */
     .card {
       background: white;
       padding: 20px;
       border-radius: 16px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+
+      /* Efek animasi saat kartu disentuh/di-hover */
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+    }
+
+    /* Efek hover kartu */
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.10);
     }
 
     .card-icon {
@@ -123,87 +135,235 @@
     #dashboard {
       display: none;
     }
+
+    /* KURSOR UNTUK KARTU YANG BISA DIBUKA */
+    .clickable {
+      cursor: pointer;
+    }
+
+    /* RESPONSIVE UNTUK HP/TABLET */
+    @media (max-width: 600px) {
+
+      .container {
+        padding: 15px;
+      }
+
+      .header {
+        padding: 16px;
+      }
+
+      .header h1 {
+        font-size: 20px;
+      }
+
+      .card {
+        padding: 18px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+
+      .actions button {
+        width: 100%;
+      }
+
+    }
   </style>
 </head>
 
 <body>
 
+  <!-- LOADING -->
   <div id="loading" class="loading">
     Memeriksa akses admin...
   </div>
 
+
+  <!-- DASHBOARD -->
   <div id="dashboard">
 
+    <!-- HEADER -->
     <header class="header">
+
       <div class="header-content">
-        <h1>Dashboard Admin</h1>
-        <p>Stasiun Kelas 1 Gombong</p>
+
+        <h1>
+          Dashboard Admin
+        </h1>
+
+        <p>
+          Stasiun Kelas 1 Gombong
+        </p>
+
       </div>
+
     </header>
 
+
+    <!-- KONTEN -->
     <main class="container">
 
+
+      <!-- WELCOME -->
       <section class="welcome">
-        <h2>Selamat datang, Admin 👋</h2>
+
+        <h2>
+          Selamat datang, Admin 👋
+        </h2>
 
         <p id="adminEmail">
           Memuat informasi akun...
         </p>
 
+
+        <!-- TOMBOL -->
         <div class="actions">
 
           <button
             class="website"
             onclick="window.location.href='index.html'">
+
             🌐 Lihat Website
+
           </button>
+
 
           <button
             class="logout"
             onclick="logout()">
+
             🚪 Keluar
+
           </button>
 
         </div>
+
       </section>
 
+
+      <!-- MENU ADMIN -->
       <section class="grid">
 
-        <div class="card">
-          <div class="card-icon">🚆</div>
-          <h3>Jadwal Kereta</h3>
-          <p>Kelola informasi jadwal kereta.</p>
+
+        <!-- JADWAL KERETA -->
+        <div
+          class="card clickable"
+          onclick="window.location.href='train-schedules.html'">
+
+          <div class="card-icon">
+            🚆
+          </div>
+
+          <h3>
+            Jadwal Kereta
+          </h3>
+
+          <p>
+            Tambah, edit, dan hapus jadwal kereta.
+          </p>
+
         </div>
 
-        <div class="card">
-          <div class="card-icon">🏢</div>
-          <h3>Profil Stasiun</h3>
-          <p>Kelola informasi Stasiun Gombong.</p>
+
+        <!-- PROFIL STASIUN -->
+        <div
+          class="card">
+
+          <div class="card-icon">
+            🏢
+          </div>
+
+          <h3>
+            Profil Stasiun
+          </h3>
+
+          <p>
+            Kelola informasi Stasiun Gombong.
+          </p>
+
         </div>
 
-        <div class="card">
-          <div class="card-icon">🛋️</div>
-          <h3>Fasilitas</h3>
-          <p>Kelola fasilitas stasiun.</p>
+
+        <!-- FASILITAS -->
+        <div
+          class="card">
+
+          <div class="card-icon">
+            🛋️
+          </div>
+
+          <h3>
+            Fasilitas
+          </h3>
+
+          <p>
+            Kelola fasilitas stasiun.
+          </p>
+
         </div>
 
-        <div class="card">
-          <div class="card-icon">🗺️</div>
-          <h3>Layout</h3>
-          <p>Kelola informasi layout area.</p>
+
+        <!-- LAYOUT -->
+        <div
+          class="card">
+
+          <div class="card-icon">
+            🗺️
+          </div>
+
+          <h3>
+            Layout
+          </h3>
+
+          <p>
+            Kelola informasi layout area.
+          </p>
+
         </div>
 
-        <div class="card">
-          <div class="card-icon">📄</div>
-          <h3>Dokumen</h3>
-          <p>Kelola dokumen digital.</p>
+
+        <!-- DOKUMEN -->
+        <div
+          class="card">
+
+          <div class="card-icon">
+            📄
+          </div>
+
+          <h3>
+            Dokumen
+          </h3>
+
+          <p>
+            Kelola dokumen digital.
+          </p>
+
         </div>
 
-        <div class="card">
-          <div class="card-icon">📢</div>
-          <h3>Pengumuman</h3>
-          <p>Kelola pengumuman dan informasi.</p>
+
+        <!-- PENGUMUMAN -->
+        <div
+          class="card">
+
+          <div class="card-icon">
+            📢
+          </div>
+
+          <h3>
+            Pengumuman
+          </h3>
+
+          <p>
+            Kelola pengumuman dan informasi.
+          </p>
+
         </div>
+
 
       </section>
 
@@ -211,73 +371,162 @@
 
   </div>
 
-  <!-- Firebase Configuration -->
+
+  <!-- FIREBASE CONFIGURATION -->
   <script src="firebase-config.js"></script>
 
-  <!-- Firebase SDK -->
+
+  <!-- FIREBASE SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
+
+  <!-- JAVASCRIPT -->
   <script>
+
+    /*
+     * INISIALISASI FIREBASE
+     */
 
     firebase.initializeApp(firebaseConfig);
 
     const auth = firebase.auth();
+
     const db = firebase.firestore();
+
+
+    /*
+     * CEK LOGIN ADMIN
+     */
 
     auth.onAuthStateChanged(async function(user) {
 
+      /*
+       * Jika belum login
+       */
+
       if (!user) {
-        window.location.href = "admin-login.html";
+
+        window.location.href =
+          "admin-login.html";
+
         return;
       }
 
+
       try {
 
+        /*
+         * Ambil data admin berdasarkan UID
+         */
+
         const adminDoc =
-          await db.collection("admins")
-          .doc(user.uid)
-          .get();
+          await db
+            .collection("admins")
+            .doc(user.uid)
+            .get();
+
+
+        /*
+         * Jika UID tidak ditemukan
+         */
 
         if (!adminDoc.exists) {
 
           await auth.signOut();
 
-          window.location.href = "admin-login.html";
+          window.location.href =
+            "admin-login.html";
 
           return;
         }
 
-        const adminData = adminDoc.data();
+
+        /*
+         * Ambil data admin
+         */
+
+        const adminData =
+          adminDoc.data();
+
+
+        /*
+         * Pastikan role adalah admin
+         */
 
         if (adminData.role !== "admin") {
 
           await auth.signOut();
 
-          window.location.href = "admin-login.html";
+          window.location.href =
+            "admin-login.html";
 
           return;
         }
 
-        document.getElementById("loading").style.display = "none";
 
-        document.getElementById("dashboard").style.display = "block";
+        /*
+         * Sembunyikan loading
+         */
 
-        document.getElementById("adminEmail").textContent =
+        document.getElementById(
+          "loading"
+        ).style.display = "none";
+
+
+        /*
+         * Tampilkan dashboard
+         */
+
+        document.getElementById(
+          "dashboard"
+        ).style.display = "block";
+
+
+        /*
+         * Tampilkan email admin
+         */
+
+        document.getElementById(
+          "adminEmail"
+        ).textContent =
           "Login sebagai: " + user.email;
+
 
       } catch (error) {
 
+        /*
+         * Tampilkan error di console
+         */
+
         console.error(error);
+
+
+        /*
+         * Logout jika terjadi kesalahan
+         */
 
         await auth.signOut();
 
-        window.location.href = "admin-login.html";
+
+        /*
+         * Kembali ke login
+         */
+
+        window.location.href =
+          "admin-login.html";
 
       }
 
     });
+
+
+    /*
+     * FUNGSI LOGOUT
+     */
 
     async function logout() {
 
@@ -285,13 +534,16 @@
 
         await auth.signOut();
 
-        window.location.href = "admin-login.html";
+        window.location.href =
+          "admin-login.html";
 
       } catch (error) {
 
         console.error(error);
 
-        alert("Gagal keluar. Silakan coba lagi.");
+        alert(
+          "Gagal keluar. Silakan coba lagi."
+        );
 
       }
 
