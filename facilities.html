@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kelola Fasilitas - Admin | Stasiun Gombong</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f6f8;color:#222}
+.header{background:#1464f4;color:#fff;padding:18px 20px}
+.header-content,.container{max-width:1100px;margin:auto}
+.header h1{margin:0;font-size:22px}.header p{margin:5px 0 0;opacity:.9;font-size:14px}
+.container{padding:20px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+button{border:0;border-radius:10px;padding:11px 15px;cursor:pointer;font-weight:bold}
+.primary{background:#1464f4;color:#fff}.secondary{background:#e9edf2;color:#222}.danger{background:#d93025;color:#fff}
+.card{background:#fff;border-radius:16px;padding:20px;margin-bottom:20px;box-shadow:0 4px 15px rgba(0,0,0,.06)}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px}
+label{display:block;font-weight:bold;margin-bottom:7px}
+input,textarea,select{width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;font-size:15px}
+textarea{min-height:100px;resize:vertical}
+.form-actions{margin-top:18px;display:flex;gap:10px}
+.item{border:1px solid #e1e5e9;border-radius:14px;padding:16px;margin-bottom:12px}
+.item-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.icon{font-size:30px;width:48px;text-align:center}.item-title{font-weight:bold;font-size:17px}
+.item-desc{color:#666;font-size:14px;margin:8px 0 0}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.loading{text-align:center;padding:50px}#page{display:none}
+@media(max-width:600px){.container{padding:15px}.actions button,.form-actions button{width:100%}.form-actions{flex-direction:column}}
+</style>
+</head>
+<body>
+<div id="loading" class="loading">Memeriksa akses admin...</div>
+<div id="page">
+<header class="header"><div class="header-content">
+<h1>Kelola Fasilitas</h1><p>Stasiun Kelas 1 Gombong</p>
+</div></header>
+<main class="container">
+<div class="topbar">
+<button class="secondary" onclick="location.href='admin.html'">← Dashboard</button>
+<button class="primary" onclick="showAddForm()">+ Tambah Fasilitas</button>
+</div>
+
+<div id="formCard" class="card" style="display:none">
+<h2 id="formTitle">Tambah Fasilitas</h2>
+<form id="facilityForm">
+<div class="form-grid">
+<div>
+<label for="name">Nama Fasilitas</label>
+<input id="name" required placeholder="Contoh: Loket Tiket">
+</div>
+<div>
+<label for="icon">Ikon Font Awesome</label>
+<input id="icon" required placeholder="fa-solid fa-ticket">
+</div>
+<div style="grid-column:1/-1">
+<label for="description">Deskripsi</label>
+<textarea id="description" placeholder="Keterangan singkat fasilitas"></textarea>
+</div>
+<div>
+<label for="active">Aktif</label>
+<select id="active"><option value="true">Ya</option><option value="false">Tidak</option></select>
+</div>
+</div>
+<div class="form-actions">
+<button class="primary" type="submit">Simpan</button>
+<button class="secondary" type="button" onclick="hideForm()">Batal</button>
+</div>
+</form>
+</div>
+
+<div class="card">
+<h2>Daftar Fasilitas</h2>
+<div id="facilityList">Memuat fasilitas...</div>
+</div>
+</main>
+</div>
+
+<script src="firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(), db=firebase.firestore();
+let editingId=null, facilities=[];
+
+function ref(){return db.collection("artifacts").doc("stasiun-gombong-gb").collection("public").doc("data").collection("station_data").doc("global");}
+function esc(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");}
+
+auth.onAuthStateChanged(async user=>{
+ if(!user){location.href="admin-login.html";return}
+ try{
+  const a=await db.collection("admins").doc(user.uid).get();
+  if(!a.exists||a.data().role!=="admin"){await auth.signOut();location.href="admin-login.html";return}
+  loading.style.display="none";page.style.display="block";loadFacilities();
+ }catch(e){console.error(e);await auth.signOut();location.href="admin-login.html"}
+});
+
+async function loadFacilities(){
+ try{
+  const snap=await ref().get(), data=snap.exists?snap.data():{};
+  facilities=Array.isArray(data.facilities)?data.facilities:[];
+  render();
+ }catch(e){console.error(e);facilityList.innerHTML="<p>Gagal memuat fasilitas: "+esc(e.message)+"</p>"}
+}
+function render(){
+ if(!facilities.length){facilityList.innerHTML='<div style="text-align:center;padding:30px;color:#777">Belum ada fasilitas.</div>';return}
+ facilityList.innerHTML=facilities.map(f=>`
+ <div class="item">
+  <div class="item-head">
+   <div style="display:flex;align-items:center;gap:12px">
+    <div class="icon"><i class="${esc(f.icon||"fa-solid fa-building")}"></i></div>
+    <div><div class="item-title">${esc(f.name||"-")}</div>
+    <div style="font-size:12px;color:${f.active===false?"#b00020":"#16743a"}">${f.active===false?"Tidak Aktif":"Aktif"}</div></div>
+   </div>
+  </div>
+  <div class="item-desc">${esc(f.description||"Tidak ada deskripsi.")}</div>
+  <div class="actions">
+   <button class="primary" onclick="editFacility('${esc(f.id)}')">Edit</button>
+   <button class="danger" onclick="deleteFacility('${esc(f.id)}')">Hapus</button>
+  </div>
+ </div>`).join("");
+}
+function showAddForm(){
+ editingId=null;formTitle.textContent="Tambah Fasilitas";facilityForm.reset();active.value="true";formCard.style.display="block";scrollTo({top:0,behavior:"smooth"});
+}
+function hideForm(){editingId=null;formCard.style.display="none";facilityForm.reset()}
+function editFacility(id){
+ const f=facilities.find(x=>String(x.id)===String(id));if(!f)return;
+ editingId=f.id;formTitle.textContent="Edit Fasilitas";name.value=f.name||"";icon.value=f.icon||"fa-solid fa-building";description.value=f.description||"";active.value=f.active===false?"false":"true";formCard.style.display="block";scrollTo({top:0,behavior:"smooth"});
+}
+facilityForm.addEventListener("submit",async e=>{
+ e.preventDefault();
+ const data={name:name.value.trim(),icon:icon.value.trim(),description:description.value.trim(),active:active.value==="true"};
+ if(!data.name||!data.icon){alert("Nama dan ikon wajib diisi.");return}
+ try{
+  if(editingId!==null){facilities=facilities.map(f=>String(f.id)===String(editingId)?{...f,...data}:f)}
+  else {const ids=facilities.map(f=>Number(f.id)).filter(Number.isFinite);const id=ids.length?Math.max(...ids)+1:1;facilities.push({id,...data})}
+  await ref().set({facilities}, {merge:true});
+  hideForm();render();alert("Fasilitas berhasil disimpan.");
+ }catch(e){console.error(e);alert("Gagal menyimpan fasilitas: "+e.message)}
+});
+async function deleteFacility(id){
+ if(!confirm("Hapus fasilitas ini?"))return;
+ try{facilities=facilities.filter(f=>String(f.id)!==String(id));await ref().set({facilities},{merge:true});render();alert("Fasilitas berhasil dihapus.")}catch(e){alert("Gagal menghapus fasilitas: "+e.message)}
+}
+</script>
+</body>
+</html>
