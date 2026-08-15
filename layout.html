@@ -68,19 +68,85 @@ auth.onAuthStateChanged(async user=>{
  }catch(e){console.error(e);alert("Gagal memuat layout: "+e.message);location.href="admin-login.html";}
 });
 
-fileInput.addEventListener("change",()=>{
- const file=fileInput.files[0]; if(!file)return;
- if(file.size>700000){alert("Ukuran gambar terlalu besar. Gunakan gambar di bawah 700 KB.");fileInput.value="";return;}
- const reader=new FileReader();
- reader.onload=()=>{selectedImage=reader.result;preview.src=selectedImage;};
- reader.readAsDataURL(file);
+fileInput.addEventListener("change", async ()=>{
+ const file=fileInput.files[0];
+ if(!file)return;
+
+ try {
+   message.textContent = "Memproses gambar...";
+   selectedImage = await compressImage(file, 700);
+   preview.src = selectedImage;
+   message.textContent = "Preview siap. Tekan Simpan Layout untuk menyimpan.";
+ } catch (error) {
+   console.error(error);
+   alert("Gagal memproses gambar: " + error.message);
+   fileInput.value = "";
+ }
 });
+
+function compressImage(file, maxKB) {
+ return new Promise((resolve, reject) => {
+   if (!file.type.startsWith("image/")) {
+     reject(new Error("File yang dipilih bukan gambar."));
+     return;
+   }
+
+   const reader = new FileReader();
+
+   reader.onload = function(event) {
+     const img = new Image();
+
+     img.onload = function() {
+       const canvas = document.createElement("canvas");
+
+       let width = img.width;
+       let height = img.height;
+
+       // Batasi dimensi agar gambar tetap tajam tetapi aman untuk Firestore.
+       const maxDimension = 1800;
+       if (Math.max(width, height) > maxDimension) {
+         const scale = maxDimension / Math.max(width, height);
+         width = Math.round(width * scale);
+         height = Math.round(height * scale);
+       }
+
+       canvas.width = width;
+       canvas.height = height;
+
+       const ctx = canvas.getContext("2d");
+       ctx.drawImage(img, 0, 0, width, height);
+
+       let quality = 0.82;
+       let result = canvas.toDataURL("image/jpeg", quality);
+
+       while (result.length > maxKB * 1024 * 1.37 && quality > 0.35) {
+         quality -= 0.07;
+         result = canvas.toDataURL("image/jpeg", quality);
+       }
+
+       if (result.length > 950000) {
+         reject(new Error("Gambar masih terlalu besar setelah dikompres. Pilih gambar yang lebih kecil."));
+         return;
+       }
+
+       resolve(result);
+     };
+
+     img.onerror = () => reject(new Error("Gambar tidak dapat dibaca."));
+     img.src = event.target.result;
+   };
+
+   reader.onerror = () => reject(new Error("Gagal membaca file."));
+   reader.readAsDataURL(file);
+ });
+}
 
 saveButton.addEventListener("click",async()=>{
  saveButton.disabled=true; saveButton.textContent="Menyimpan...";
  try{
    await docRef().set({layoutImage:selectedImage},{merge:true});
-   message.textContent="Layout berhasil disimpan dan akan digunakan website utama.";
+   message.textContent="Layout berhasil disimpan dan website utama akan menggunakan gambar terbaru.";
+   fileInput.value="";
    alert("Layout berhasil disimpan.");
  }catch(e){console.error(e);alert("Gagal menyimpan layout: "+e.message);}
  finally{saveButton.disabled=false;saveButton.textContent="Simpan Layout";}
