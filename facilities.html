@@ -81,70 +81,214 @@ textarea{min-height:100px;resize:vertical}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
+"use strict";
+
 firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth(), db=firebase.firestore();
-let editingId=null, facilities=[];
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-function ref(){return db.collection("artifacts").doc("stasiun-gombong-gb").collection("public").doc("data").collection("station_data").doc("global");}
-function esc(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");}
+const loadingEl = document.getElementById("loading");
+const pageEl = document.getElementById("page");
+const formCardEl = document.getElementById("formCard");
+const formEl = document.getElementById("facilityForm");
+const listEl = document.getElementById("facilityList");
+const titleEl = document.getElementById("formTitle");
+const nameEl = document.getElementById("name");
+const iconEl = document.getElementById("icon");
+const descriptionEl = document.getElementById("description");
+const activeEl = document.getElementById("active");
 
-auth.onAuthStateChanged(async user=>{
- if(!user){location.href="admin-login.html";return}
- try{
-  const a=await db.collection("admins").doc(user.uid).get();
-  if(!a.exists||a.data().role!=="admin"){await auth.signOut();location.href="admin-login.html";return}
-  loading.style.display="none";page.style.display="block";loadFacilities();
- }catch(e){console.error(e);await auth.signOut();location.href="admin-login.html"}
+let editingId = null;
+let facilities = [];
+
+function facilityDoc() {
+  return db.collection("artifacts")
+    .doc("stasiun-gombong-gb")
+    .collection("public")
+    .doc("data")
+    .collection("station_data")
+    .doc("global");
+}
+
+function esc(v) {
+  return String(v ?? "")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+auth.onAuthStateChanged(async user => {
+  if (!user) {
+    window.location.href = "admin-login.html";
+    return;
+  }
+
+  try {
+    const adminDoc = await db.collection("admins").doc(user.uid).get();
+
+    if (!adminDoc.exists || adminDoc.data().role !== "admin") {
+      await auth.signOut();
+      window.location.href = "admin-login.html";
+      return;
+    }
+
+    loadingEl.style.display = "none";
+    pageEl.style.display = "block";
+    await loadFacilities();
+
+  } catch (error) {
+    console.error("Pemeriksaan admin gagal:", error);
+    alert("Gagal memeriksa akses admin: " + error.message);
+    await auth.signOut();
+    window.location.href = "admin-login.html";
+  }
 });
 
-async function loadFacilities(){
- try{
-  const snap=await ref().get(), data=snap.exists?snap.data():{};
-  facilities=Array.isArray(data.facilities)?data.facilities:[];
-  render();
- }catch(e){console.error(e);facilityList.innerHTML="<p>Gagal memuat fasilitas: "+esc(e.message)+"</p>"}
+async function loadFacilities() {
+  listEl.innerHTML = "Memuat fasilitas...";
+
+  try {
+    const snap = await facilityDoc().get();
+    const data = snap.exists ? snap.data() : {};
+    facilities = Array.isArray(data.facilities) ? data.facilities : [];
+    render();
+  } catch (error) {
+    console.error("Gagal membaca fasilitas:", error);
+    listEl.innerHTML =
+      '<p style="color:#b00020">Gagal membaca data: ' +
+      esc(error.message) + '</p>';
+  }
 }
-function render(){
- if(!facilities.length){facilityList.innerHTML='<div style="text-align:center;padding:30px;color:#777">Belum ada fasilitas.</div>';return}
- facilityList.innerHTML=facilities.map(f=>`
- <div class="item">
-  <div class="item-head">
-   <div style="display:flex;align-items:center;gap:12px">
-    <div class="icon"><i class="${esc(f.icon||"fa-solid fa-building")}"></i></div>
-    <div><div class="item-title">${esc(f.name||"-")}</div>
-    <div style="font-size:12px;color:${f.active===false?"#b00020":"#16743a"}">${f.active===false?"Tidak Aktif":"Aktif"}</div></div>
-   </div>
-  </div>
-  <div class="item-desc">${esc(f.description||"Tidak ada deskripsi.")}</div>
-  <div class="actions">
-   <button class="primary" onclick="editFacility('${esc(f.id)}')">Edit</button>
-   <button class="danger" onclick="deleteFacility('${esc(f.id)}')">Hapus</button>
-  </div>
- </div>`).join("");
+
+function render() {
+  if (!facilities.length) {
+    listEl.innerHTML =
+      '<div style="text-align:center;padding:30px;color:#777">Belum ada fasilitas.</div>';
+    return;
+  }
+
+  listEl.innerHTML = facilities.map(f => `
+    <div class="item">
+      <div class="item-head">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="icon"><i class="${esc(f.icon || "fa-solid fa-building")}"></i></div>
+          <div>
+            <div class="item-title">${esc(f.name || "-")}</div>
+            <div style="font-size:12px;color:${f.active === false ? "#b00020" : "#16743a"}">
+              ${f.active === false ? "Tidak Aktif" : "Aktif"}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="item-desc">${esc(f.description || "Tidak ada deskripsi.")}</div>
+      <div class="actions">
+        <button class="primary" type="button" onclick="editFacility('${esc(f.id)}')">Edit</button>
+        <button class="danger" type="button" onclick="deleteFacility('${esc(f.id)}')">Hapus</button>
+      </div>
+    </div>
+  `).join("");
 }
-function showAddForm(){
- editingId=null;formTitle.textContent="Tambah Fasilitas";facilityForm.reset();active.value="true";formCard.style.display="block";scrollTo({top:0,behavior:"smooth"});
-}
-function hideForm(){editingId=null;formCard.style.display="none";facilityForm.reset()}
-function editFacility(id){
- const f=facilities.find(x=>String(x.id)===String(id));if(!f)return;
- editingId=f.id;formTitle.textContent="Edit Fasilitas";name.value=f.name||"";icon.value=f.icon||"fa-solid fa-building";description.value=f.description||"";active.value=f.active===false?"false":"true";formCard.style.display="block";scrollTo({top:0,behavior:"smooth"});
-}
-facilityForm.addEventListener("submit",async e=>{
- e.preventDefault();
- const data={name:name.value.trim(),icon:icon.value.trim(),description:description.value.trim(),active:active.value==="true"};
- if(!data.name||!data.icon){alert("Nama dan ikon wajib diisi.");return}
- try{
-  if(editingId!==null){facilities=facilities.map(f=>String(f.id)===String(editingId)?{...f,...data}:f)}
-  else {const ids=facilities.map(f=>Number(f.id)).filter(Number.isFinite);const id=ids.length?Math.max(...ids)+1:1;facilities.push({id,...data})}
-  await ref().set({facilities}, {merge:true});
-  hideForm();render();alert("Fasilitas berhasil disimpan.");
- }catch(e){console.error(e);alert("Gagal menyimpan fasilitas: "+e.message)}
+
+window.showAddForm = function() {
+  editingId = null;
+  titleEl.textContent = "Tambah Fasilitas";
+  formEl.reset();
+  activeEl.value = "true";
+  formCardEl.style.display = "block";
+  window.scrollTo({top:0, behavior:"smooth"});
+};
+
+window.hideForm = function() {
+  editingId = null;
+  formCardEl.style.display = "none";
+  formEl.reset();
+};
+
+window.editFacility = function(id) {
+  const f = facilities.find(x => String(x.id) === String(id));
+  if (!f) return;
+
+  editingId = f.id;
+  titleEl.textContent = "Edit Fasilitas";
+  nameEl.value = f.name || "";
+  iconEl.value = f.icon || "fa-solid fa-building";
+  descriptionEl.value = f.description || "";
+  activeEl.value = f.active === false ? "false" : "true";
+  formCardEl.style.display = "block";
+  window.scrollTo({top:0, behavior:"smooth"});
+};
+
+formEl.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const button = formEl.querySelector('button[type="submit"]');
+  const data = {
+    name: nameEl.value.trim(),
+    icon: iconEl.value.trim(),
+    description: descriptionEl.value.trim(),
+    active: activeEl.value === "true"
+  };
+
+  if (!data.name) {
+    alert("Nama fasilitas wajib diisi.");
+    nameEl.focus();
+    return;
+  }
+
+  if (!data.icon) {
+    alert("Icon Font Awesome wajib diisi.");
+    iconEl.focus();
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Menyimpan...";
+
+  try {
+    if (editingId !== null) {
+      facilities = facilities.map(f =>
+        String(f.id) === String(editingId) ? {...f, ...data} : f
+      );
+    } else {
+      const ids = facilities
+        .map(f => Number(f.id))
+        .filter(Number.isFinite);
+      const id = ids.length ? Math.max(...ids) + 1 : 1;
+      facilities.push({id, ...data});
+    }
+
+    await facilityDoc().set({facilities: facilities}, {merge:true});
+
+    await loadFacilities();
+    hideForm();
+
+    alert("Fasilitas berhasil disimpan.");
+  } catch (error) {
+    console.error("SAVE FACILITY ERROR:", error);
+    alert(
+      "Tombol Simpan gagal.\n\n" +
+      "Kode: " + (error.code || "-") + "\n" +
+      "Pesan: " + (error.message || "-")
+    );
+  } finally {
+    button.disabled = false;
+    button.textContent = "Simpan";
+  }
 });
-async function deleteFacility(id){
- if(!confirm("Hapus fasilitas ini?"))return;
- try{facilities=facilities.filter(f=>String(f.id)!==String(id));await ref().set({facilities},{merge:true});render();alert("Fasilitas berhasil dihapus.")}catch(e){alert("Gagal menghapus fasilitas: "+e.message)}
-}
+
+window.deleteFacility = async function(id) {
+  if (!confirm("Hapus fasilitas ini?")) return;
+
+  try {
+    facilities = facilities.filter(f => String(f.id) !== String(id));
+    await facilityDoc().set({facilities: facilities}, {merge:true});
+    await loadFacilities();
+    alert("Fasilitas berhasil dihapus.");
+  } catch (error) {
+    console.error("DELETE FACILITY ERROR:", error);
+    alert("Gagal menghapus fasilitas: " + error.message);
+  }
+};
 </script>
 </body>
 </html>
