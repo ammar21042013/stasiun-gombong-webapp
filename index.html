@@ -383,31 +383,28 @@
             <div class="px-4 pt-4">
                 <div class="flex items-center gap-3 mb-4 cursor-pointer" onclick="switchPage('home')">
                     <i class="fa-solid fa-arrow-left text-gray-600"></i>
-                    <h2 class="font-bold text-lg text-gray-800">Profil Stasiun Gombong</h2>
+                    <h2 class="font-bold text-lg text-gray-800" id="station-profile-title">Profil Stasiun Gombong</h2>
                 </div>
-                
-                <img src="1514023314.jpeg" onerror="this.src='https://placehold.co/400x200/cccccc/333333?text=Stasiun+Gombong'" alt="Stasiun Gombong" class="w-full h-48 object-cover rounded-xl mb-4 shadow-sm">
-                
+
+                <img id="station-profile-image"
+                     src="1514023314.jpeg"
+                     onerror="this.src='https://placehold.co/400x200/cccccc/333333?text=Stasiun+Gombong'"
+                     alt="Stasiun Gombong"
+                     class="w-full h-48 object-cover rounded-xl mb-4 shadow-sm">
+
                 <div class="card">
                     <h3 class="font-bold text-gray-800 border-b pb-2 mb-3">Sejarah & Informasi</h3>
-                    <p class="text-sm text-gray-600 leading-relaxed text-justify">
-                        Stasiun Gombong (GB) adalah stasiun kereta api kelas I yang terletak di Wonokriyo, Gombong, Kebumen, Jawa Tengah. Stasiun yang terletak pada ketinggian +18 meter ini termasuk dalam Daerah Operasi V Purwokerto.
-                    </p>
-                    <p class="text-sm text-gray-600 leading-relaxed text-justify mt-2">
-                        Berdasarkan sejarah, Hindia Belanda pernah membangun Benteng Van der Wijck sebagai basis kekuatan militer Belanda, serta membangun stasiun yang kelak dikenal sebagai Stasiun Gombong.
-                    </p>
-                    <p class="text-sm text-gray-600 leading-relaxed text-justify mt-2">
-                        Meski terletak di bagian barat Kabupaten Kebumen, stasiun ini lebih dikenal oleh masyarakat Kebumen dan sekitarnya. Stasiun ini memiliki okupansi penumpang yang sangat baik karena disinggahi banyak kereta tujuan Bandung, Surabaya, dan Jakarta.
-                    </p>
+                    <div id="station-profile-description"
+                         class="text-sm text-gray-600 leading-relaxed text-justify">
+                        <p>Memuat informasi profil stasiun...</p>
+                    </div>
                 </div>
 
                 <div class="card">
                     <h3 class="font-bold text-gray-800 border-b pb-2 mb-3">Fasilitas Teknis</h3>
-                    <ul class="text-sm text-gray-600 space-y-2">
-                        <li class="flex gap-2 items-start"><i class="fa-solid fa-check text-green-500 mt-1"></i> <div><strong>Jumlah Peron:</strong> 3 (satu peron sisi dan dua peron pulau)</div></li>
-                        <li class="flex gap-2 items-start"><i class="fa-solid fa-check text-green-500 mt-1"></i> <div><strong>Jumlah Jalur:</strong> 5 (Jalur 2 dan 3 sebagai sepur lurus)</div></li>
-                        <li class="flex gap-2 items-start"><i class="fa-solid fa-check text-green-500 mt-1"></i> <div><strong>Persinyalan:</strong> Elektrik tipe Sinyal Interlocking Len-02 (sejak 2020)</div></li>
-                        <li class="flex gap-2 items-start"><i class="fa-solid fa-check text-green-500 mt-1"></i> <div><strong>Bangunan:</strong> Bangunan baru (barat bangunan lama) difokuskan untuk operasional, bangunan lama sebagai pintu keluar.</div></li>
+                    <ul id="station-profile-technical"
+                        class="text-sm text-gray-600 space-y-2">
+                        <li>Memuat fasilitas teknis...</li>
                     </ul>
                 </div>
             </div>
@@ -967,13 +964,97 @@
         let clockTimer = null;
         let deferredPrompt = null;
 
-        async function initApp() {
+        
+        // Memuat Profil Stasiun dari Firestore.
+        
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+async function loadStationProfileFromFirestore() {
+            const db = window.stationDb;
+            if (!db) return;
+
+            const ref = db
+                .collection("artifacts")
+                .doc("stasiun-gombong-gb")
+                .collection("public")
+                .doc("data")
+                .collection("station_data")
+                .doc("global");
+
+            try {
+                const snap = await ref.get();
+                if (!snap.exists) return;
+
+                const data = snap.data() || {};
+                const p = data.stationProfile || {};
+
+                const title = document.getElementById("station-profile-title");
+                const image = document.getElementById("station-profile-image");
+                const description = document.getElementById("station-profile-description");
+                const technical = document.getElementById("station-profile-technical");
+
+                if (title) {
+                    title.textContent = p.name
+                        ? "Profil " + p.name
+                        : "Profil Stasiun Gombong";
+                }
+
+                if (image && p.imageUrl) {
+                    image.src = p.imageUrl;
+                    image.alt = p.name || "Stasiun Gombong";
+                }
+
+                if (description) {
+                    const paragraphs = String(p.description || "")
+                        .split(/\n\s*\n/)
+                        .map(s => s.trim())
+                        .filter(Boolean);
+
+                    description.innerHTML = paragraphs.length
+                        ? paragraphs.map(s => "<p>" + escapeHtml(s) + "</p>").join("")
+                        : "<p>Informasi profil belum tersedia.</p>";
+
+                    description.querySelectorAll("p:not(:first-child)")
+                        .forEach(el => el.classList.add("mt-2"));
+                }
+
+                if (technical) {
+                    const items = [
+                        ["Jumlah Peron", p.platforms],
+                        ["Jumlah Jalur", p.tracks],
+                        ["Persinyalan", p.signaling],
+                        ["Bangunan", p.building]
+                    ].filter(item => item[1]);
+
+                    technical.innerHTML = items.length
+                        ? items.map(([label, value]) =>
+                            '<li class="flex gap-2 items-start">' +
+                            '<i class="fa-solid fa-check text-green-500 mt-1"></i>' +
+                            '<div><strong>' + escapeHtml(label) + ':</strong> ' +
+                            escapeHtml(value) + '</div></li>'
+                          ).join("")
+                        : "<li>Informasi fasilitas teknis belum tersedia.</li>";
+                }
+            } catch (error) {
+                console.warn("Gagal memuat Profil Stasiun dari Firestore:", error);
+            }
+        }
+
+async function initApp() {
             setupPWA();
             loadLocalStorage();
             renderHomeSchedules();
             renderJadwal();
             renderFasilitas();
             renderAdminData();
+            loadStationProfileFromFirestore();
             startBMKGClock();
 
             if (auth) {
@@ -1470,5 +1551,22 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
 }
 </script>
+
+<!-- Firebase Firestore: Profil Stasiun -->
+<script src="firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+(function () {
+  try {
+    if (!window.firebase) return;
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    window.stationDb = firebase.firestore();
+  } catch (e) {
+    console.warn("Firebase Profil Stasiun tidak aktif:", e);
+  }
+})();
+</script>
+
 </body>
 </html>
