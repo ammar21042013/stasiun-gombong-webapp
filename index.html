@@ -198,8 +198,8 @@
             color: #374151;
             white-space: nowrap;
         }
-        #table-jadwal th:nth-child(1), #table-jadwal td:nth-child(1) { min-width: 90px; }
-        #table-jadwal th:nth-child(2), #table-jadwal td:nth-child(2) { min-width: 145px; }
+        #table-jadwal th:nth-child(1), #table-jadwal td:nth-child(1) { min-width: 90px; text-align: center; }
+        #table-jadwal th:nth-child(2), #table-jadwal td:nth-child(2) { min-width: 145px; text-align: center; }
         #table-jadwal th:nth-child(3), #table-jadwal td:nth-child(3) { min-width: 250px; text-align: center; }
         #table-jadwal th:nth-child(4), #table-jadwal td:nth-child(4) { min-width: 150px; text-align: center; }
         #table-jadwal th:nth-child(5), #table-jadwal td:nth-child(5) { min-width: 70px; text-align: center; }
@@ -2064,7 +2064,7 @@
 })();
 </script>
 
-<div id="update-badge">Update v7<small>Stasiun Gombong Web App</small></div>
+<div id="update-badge">Update v8<small>Stasiun Gombong Web App</small></div>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js?v=4').catch(()=>{}));
