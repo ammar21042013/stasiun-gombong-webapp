@@ -848,17 +848,19 @@
 
     </div>
 
+    <script src="firebase-config.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'stasiun-gombong-gb';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "demo", projectId: "demo" };
+        const appFirebaseConfig = (typeof window.firebaseConfig !== 'undefined') ? window.firebaseConfig : (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null);
 
         let app, db, auth;
         try {
-            app = initializeApp(firebaseConfig);
+            if (!appFirebaseConfig) throw new Error("firebaseConfig tidak ditemukan. Pastikan firebase-config.js tersedia.");
+            app = initializeApp(appFirebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
         } catch (e) {
@@ -1015,11 +1017,14 @@
                     } else {
                         await signInAnonymously(auth);
                     }
-                    setupFirestoreSync();
                 } catch (e) {
-                    console.warn("Auth/Cloud offline mode active:", e);
+                    console.warn("Firebase Auth offline/nonaktif; pembacaan publik tetap dilanjutkan:", e);
                 }
             }
+
+            // Jadwal Firestore bersifat publik (aturan Firestore mengizinkan read).
+            // Karena itu website utama TIDAK boleh menunggu login admin untuk membaca jadwal.
+            setupFirestoreSync();
             
             document.getElementById('search-jadwal').addEventListener('input', (e) => {
                 searchQuery = e.target.value.toLowerCase();
@@ -1260,7 +1265,7 @@
         }
 
         function setupFirestoreSync() {
-            if (!db || !auth || !auth.currentUser) return;
+            if (!db) return;
 
             const docRef = doc(
                 db,
@@ -2074,7 +2079,7 @@
 })();
 </script>
 
-<div id="update-badge">Update v9<small>Stasiun Gombong Web App</small></div>
+<div id="update-badge">Update v10<small>Stasiun Gombong Web App</small></div>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js?v=4').catch(()=>{}));
