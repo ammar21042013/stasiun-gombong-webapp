@@ -192,6 +192,16 @@
             font-size: 0.875rem;
             vertical-align: top;
         }
+        .header-stack {
+            display: block;
+            width: 100%;
+            text-align: center !important;
+            line-height: 1.25;
+        }
+        #table-jadwal th, #table-jadwal td {
+            text-align: center !important;
+            vertical-align: middle;
+        }
         th {
             background-color: #f9fafb;
             font-weight: 600;
@@ -2064,7 +2074,7 @@
 })();
 </script>
 
-<div id="update-badge">Update v8<small>Stasiun Gombong Web App</small></div>
+<div id="update-badge">Update v9<small>Stasiun Gombong Web App</small></div>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js?v=4').catch(()=>{}));
