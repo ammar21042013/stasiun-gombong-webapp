@@ -557,7 +557,7 @@
                         <div class="bg-slate-900 text-white p-4 rounded-xl font-mono text-xs space-y-2 shadow-inner">
                             <div class="flex justify-between items-center text-slate-400 border-b border-slate-700 pb-2">
                                 <span>Arah Purwokerto / Barat</span>
-                                <span class="text-green-600 font-bold">Stasiun Gombong (GB)</span>
+                                <span class="text-kai-orange font-bold">Stasiun Gombong (GB)</span>
                                 <span>Arah Kutoarjo / Timur</span>
                             </div>
                             <div class="py-2 space-y-1">
@@ -1143,57 +1143,35 @@
         function formatRelation(value) {
             const raw = String(value || '').trim();
             if (!raw) return '-';
-
-            // Ubah kode relasi dari CSV/Firestore menjadi nama stasiun lengkap.
-            // Contoh: BD-SLO -> Bandung (BD) - Solo Balapan (SLO).
-            const stationNames = {
-                KTA: 'Kutoarjo',
-                PSE: 'Pasarsenen',
-                ML: 'Malang',
-                BD: 'Bandung',
-                SLO: 'Solo Balapan',
-                YK: 'Yogyakarta',
-                SGU: 'Surabaya Gubeng',
-                PWT: 'Purwokerto',
-                GMR: 'Gambir',
-                MN: 'Madiun',
-                KAC: 'Kiaracondong',
-                CP: 'Cilacap',
-                PWS: 'Purwosari',
-                BL: 'Blitar',
-                LPN: 'Lempuyangan',
-                JG: 'Jatibarang',
-                CN: 'Cirebon',
-                TG: 'Tegal',
-                SMT: 'Semarang Tawang'
-            };
-
-            // Jika sudah berupa nama lengkap, jangan diubah lagi.
             if (!/^[A-Z]{2,4}(?:-[A-Z]{2,4})+$/.test(raw)) return raw;
-
-            return raw.split('-').map(code => {
-                const name = stationNames[code] || code;
-                return `${name} (${code})`;
-            }).join(' - ');
+            const stationNames = {
+                KTA:'Kutoarjo', PSE:'Pasarsenen', ML:'Malang', BD:'Bandung',
+                SLO:'Solo Balapan', YK:'Yogyakarta', SGU:'Surabaya Gubeng',
+                PWT:'Purwokerto', GMR:'Gambir', MN:'Madiun', KAC:'Kiaracondong',
+                CP:'Cilacap', PWS:'Purwosari', BL:'Blitar', LPN:'Lempuyangan',
+                JG:'Jatibarang', CN:'Cirebon', TG:'Tegal', SMT:'Semarang Tawang',
+                KTG:'Ketapang', KYA:'Kroya', KDI:'Kediri', JR:'Jember'
+            };
+            return raw.split('-').map(code => `${stationNames[code] || code} (${code})`).join(' - ');
         }
 
         function resolveTrainNumber(raw) {
             const direct = raw.nomor_ka || raw.trainNumber || raw.no_ka || raw.ka;
             if (direct) return String(direct);
-
             const hulu = raw.nomor_ka_hulu || raw.ka_hulu || '';
             const hilir = raw.nomor_ka_hilir || raw.ka_hilir || '';
             if (hulu) return String(hulu);
             if (hilir) return String(hilir);
-
-            // Data CSV lama tidak mengisi nomor KA untuk BIMA 00:55.
-            // Berdasarkan pasangan relasinya, BIMA yang berangkat ke arah GMR adalah KA 7.
             const name = String(raw.nama_ka || raw.name || '').trim().toUpperCase();
             const relation = String(raw.relasi || raw.relation || '').trim().toUpperCase();
             if (name === 'BIMA' && relation === 'SLO-GMR') return '7';
             if (name === 'BIMA' && relation === 'GMR-SGU') return '8';
-
             return '-';
+        }
+
+        function isMissingTime(value) {
+            const v = String(value || '').trim();
+            return !v || v === '-';
         }
 
         function isDirect(value) {
@@ -1224,77 +1202,34 @@
 
                     const dat = String(raw.jam_dat ?? raw.arrival ?? '').trim();
                     const ber = String(raw.jam_ber ?? raw.departure ?? '').trim();
-
                     const datDirect = isDirect(dat);
                     const berDirect = isDirect(ber);
 
-                    // Semua kereta bertanda "LS" (Langsung) ditampilkan di
-                    // tab Keberangkatan. Jika tanda LS berada di kolom DAT,
-                    // gunakan jam BER sebagai jam keberangkatannya. Dengan
-                    // begitu label "Langsung" selalu berada tepat di atas jam,
-                    // bukan di atas tanda "-".
+                    // Semua KA Langsung masuk KEberangkatan. Label Langsung
+                    // ditempatkan di atas jam yang nyata, bukan di atas '-'.
                     if (datDirect) {
-                        if (ber && !berDirect) {
-                            result.push({
-                                id: `${base.baseId}-berangkat-langsung`,
-                                type: 'berangkat',
-                                name: base.name,
-                                trainNumber: base.trainNumber,
-                                relation: base.relation,
-                                className: base.className,
-                                jalur: base.jalur,
-                                time: ber,
-                                direct: true
-                            });
-                        } else if (berDirect) {
-                            // Tidak ada jam nyata pada pasangan DAT/BER ini,
-                            // jadi jangan membuat tampilan "Langsung" + "-".
-                            // Data akan tetap dipertahankan tanpa membuat
-                            // baris kosong yang membingungkan pengguna.
+                        if (!isMissingTime(ber) && !berDirect) {
+                            result.push({ id:`${base.baseId}-berangkat-langsung`, type:'berangkat', name:base.name, trainNumber:base.trainNumber, relation:base.relation, className:base.className, jalur:base.jalur, time:ber, direct:true });
                         }
-                    } else if (dat) {
-                        // Jadwal kedatangan normal.
-                        result.push({
-                            id: `${base.baseId}-datang`,
-                            type: 'datang',
-                            name: base.name,
-                            trainNumber: base.trainNumber,
-                            relation: base.relation,
-                            className: base.className,
-                            jalur: base.jalur,
-                            time: dat,
-                            direct: false
-                        });
+                        return;
                     }
 
-                    if (ber && !berDirect && !datDirect) {
-                        // Jadwal keberangkatan normal.
-                        result.push({
-                            id: `${base.baseId}-berangkat`,
-                            type: 'berangkat',
-                            name: base.name,
-                            trainNumber: base.trainNumber,
-                            relation: base.relation,
-                            className: base.className,
-                            jalur: base.jalur,
-                            time: ber,
-                            direct: false
-                        });
-                    } else if (berDirect && !datDirect && dat) {
-                        // Jika LS justru berada di kolom BER tetapi DAT
-                        // mempunyai jam nyata, jadikan tetap keberangkatan
-                        // langsung dan gunakan jam DAT agar tidak tampil "-".
-                        result.push({
-                            id: `${base.baseId}-berangkat-langsung`,
-                            type: 'berangkat',
-                            name: base.name,
-                            trainNumber: base.trainNumber,
-                            relation: base.relation,
-                            className: base.className,
-                            jalur: base.jalur,
-                            time: dat,
-                            direct: true
-                        });
+                    // Kedatangan dengan waktu '-' atau kosong dihapus.
+                    if (!isMissingTime(dat)) {
+                        result.push({ id:`${base.baseId}-datang`, type:'datang', name:base.name, trainNumber:base.trainNumber, relation:base.relation, className:base.className, jalur:base.jalur, time:dat, direct:false });
+                    }
+
+                    // Jika BER = Ls, jadikan keberangkatan langsung dan gunakan
+                    // jam DAT sebagai jam keberangkatan bila tersedia.
+                    if (berDirect) {
+                        if (!isMissingTime(dat)) {
+                            result.push({ id:`${base.baseId}-berangkat-langsung`, type:'berangkat', name:base.name, trainNumber:base.trainNumber, relation:base.relation, className:base.className, jalur:base.jalur, time:dat, direct:true });
+                        }
+                        return;
+                    }
+
+                    if (!isMissingTime(ber)) {
+                        result.push({ id:`${base.baseId}-berangkat`, type:'berangkat', name:base.name, trainNumber:base.trainNumber, relation:base.relation, className:base.className, jalur:base.jalur, time:ber, direct:false });
                     }
 
                     return;
@@ -1302,18 +1237,16 @@
 
                 // Backward compatibility for any old display records.
                 if (raw && raw.type && raw.time !== undefined) {
-                    const legacyDirect = !!raw.direct || isDirect(raw.status);
                     result.push({
                         id: raw.id ?? `legacy-${index + 1}`,
-                        // Semua data Langsung dipaksa masuk ke Keberangkatan.
-                        type: legacyDirect ? 'berangkat' : raw.type,
+                        type: raw.type,
                         name: raw.name || '-',
                         trainNumber: raw.trainNumber || '-',
                         relation: formatRelation(raw.relation || ''),
                         className: formatClass(raw.className || raw.kelas || ''),
                         jalur: raw.jalur ?? raw.track ?? '-',
                         time: raw.time || '',
-                        direct: legacyDirect
+                        direct: !!raw.direct || isDirect(raw.status)
                     });
                 }
             });
@@ -1555,7 +1488,7 @@
                     : '';
 
                 container.innerHTML += `
-                    <div class="flex items-center justify-between border-b pb-2.5 last:border-0 last:pb-0">
+                    <div class="flex items-center justify-between border-b pb-2.5 last:border-0 last:pb-0 cursor-pointer" onclick="switchPage('jadwal')">
                         <div class="flex items-center gap-3">
                             <div class="bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1 text-kai-blue min-w-[60px] text-center shadow-sm">
                                 ${directLabel}
@@ -1611,7 +1544,7 @@
 
             filtered.forEach(s => {
                 const directLabel = s.direct
-                    ? '<div class="text-[9px] text-green-600 font-bold tracking-wide mb-0.5">Langsung</div>'
+                    ? '<div class="text-[9px] text-kai-orange font-bold uppercase tracking-wide mb-0.5">Langsung</div>'
                     : '';
 
                 const tr = document.createElement('tr');
@@ -1880,26 +1813,21 @@
                     countdownText = `Segera berangkat`;
                 }
 
-                const directLabel = schedule.direct
-                    ? '<div class="text-[9px] text-green-600 font-bold tracking-wide">Langsung</div>'
-                    : '';
-
                 container.innerHTML += `
-                    <div class="flex items-center justify-between border-b pb-2.5 last:border-0 last:pb-0 cursor-pointer" onclick="switchPage('jadwal')" title="Lihat semua jadwal">
+                    <div class="flex items-center justify-between border-b pb-2.5 last:border-0 last:pb-0">
                         <div class="flex items-center gap-3">
                             <div class="bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1 text-kai-blue font-bold text-sm min-w-[60px] text-center shadow-sm">
-                                ${directLabel}
-                                <div>${escapeHtml(schedule.time || '-')}</div>
+                                ${schedule.time}
                             </div>
                             <div>
                                 <div class="flex items-center gap-2">
-                                    <p class="font-bold text-sm text-gray-800">${escapeHtml(schedule.name || '-')}</p>
+                                    <p class="font-bold text-sm text-gray-800">${schedule.name}</p>
                                     <span class="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full font-medium">${countdownText}</span>
                                 </div>
-                                <p class="text-xs text-gray-500 truncate max-w-[200px] sm:max-w-[260px]">Relasi: ${escapeHtml(formatRelation(schedule.relation || ''))}</p>
+                                <p class="text-xs text-gray-500 truncate max-w-[200px] sm:max-w-[260px]">Relasi: ${schedule.relation}</p>
                             </div>
                         </div>
-                        <i class="fa-solid fa-chevron-right text-gray-300 text-xs pointer-events-none"></i>
+                        <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
                     </div>
                 `;
             });
@@ -2185,10 +2113,10 @@
 })();
 </script>
 
-<div id="update-badge">Update v15<small>Stasiun Gombong Web App</small></div>
+<div id="update-badge">Update v18<small>Stasiun Gombong Web App</small></div>
 <script>
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js?v=14').catch(()=>{}));
+  window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js?v=18').catch(()=>{}));
 }
 </script>
 </body>
