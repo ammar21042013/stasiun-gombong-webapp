@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kelola Jadwal Kereta - Admin | Stasiun Gombong</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f6f8;color:#222}
+.header{background:#1464f4;color:#fff;padding:18px 20px}.wrap{max-width:1150px;margin:auto}.header h1{margin:0;font-size:22px}.header p{margin:5px 0 0;opacity:.9}
+.container{padding:20px}.topbar{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+button{border:0;border-radius:10px;padding:11px 15px;font-weight:bold;cursor:pointer}.primary{background:#1464f4;color:#fff}.secondary{background:#e9edf2;color:#222}.danger{background:#d93025;color:#fff}
+.card{background:#fff;border-radius:16px;padding:20px;margin-bottom:18px;box-shadow:0 4px 15px rgba(0,0,0,.06)}
+.notice{background:#eef5ff;color:#174a9c;padding:13px;border-radius:10px;line-height:1.5;font-size:14px;margin-bottom:15px}
+input[type=file]{width:100%;padding:12px;border:1px dashed #aaa;border-radius:10px;background:#fafafa}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.status{margin-top:12px;font-size:14px;line-height:1.5}
+.progress{height:10px;background:#e7ebef;border-radius:99px;overflow:hidden;margin-top:10px;display:none}.bar{height:100%;width:0;background:#1464f4}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid #eee;padding:9px;text-align:left;white-space:nowrap}th{background:#f7f8fa}
+.table-wrap{overflow:auto}.empty{text-align:center;color:#777;padding:30px}
+.badge{display:inline-block;padding:4px 8px;border-radius:15px;background:#e8f5e9;color:#176b2c;font-size:12px}
+@media(max-width:600px){.container{padding:12px}.actions button{width:100%}}
+</style>
+</head>
+<body>
+<div id="loading" class="empty">Memeriksa akses admin...</div>
+<div id="page" style="display:none">
+<header class="header"><div class="wrap"><h1>Kelola Jadwal Kereta</h1><p>Stasiun Kelas 1 Gombong</p></div></header>
+<main class="wrap container">
+<div class="topbar">
+<button class="secondary" onclick="location.href='admin.html'">← Dashboard</button>
+<span class="badge" id="countBadge">0 jadwal</span>
+</div>
+
+<div class="card">
+<h2>Import Jadwal dari CSV</h2>
+<div class="notice">
+<b>Import sekaligus:</b> pilih file CSV jadwal. Sistem akan membaca seluruh baris dan
+mengganti data jadwal di <code>station_data/global</code>. Ini tidak menggunakan Firebase Storage.
+Pastikan file CSV adalah versi yang benar sebelum menekan Import.
+</div>
+<input id="csvFile" type="file" accept=".csv,text/csv">
+<div id="fileInfo" class="status"></div>
+<div class="actions">
+<button class="primary" id="importBtn" disabled>Import ke Firestore</button>
+<button class="secondary" id="reloadBtn">Muat Data Firestore</button>
+</div>
+<div class="progress" id="progress"><div class="bar" id="bar"></div></div>
+<div id="result" class="status"></div>
+</div>
+
+<div class="card">
+<h2>Data yang tersimpan di Firestore</h2>
+<div id="tableBox"><div class="empty">Memuat...</div></div>
+</div>
+</main>
+</div>
+
+<script src="firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(),db=firebase.firestore();
+const APP_ID="stasiun-gombong-gb";
+const DOC_PATH=["artifacts",APP_ID,"public","data","station_data","global"];
+let selectedFile=null;
+
+function esc(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}
+function stationRef(){return db.collection("artifacts").doc(APP_ID).collection("public").doc("data").collection("station_data").doc("global")}
+
+auth.onAuthStateChanged(async user=>{
+ if(!user){location.href="admin-login.html";return}
+ try{
+  const a=await db.collection("admins").doc(user.uid).get();
+  if(!a.exists||a.data().role!=="admin"){await auth.signOut();location.href="admin-login.html";return}
+  loading.style.display="none";page.style.display="block";loadFirestore();
+ }catch(e){console.error(e);alert("Gagal memeriksa admin: "+e.message)}
+});
+
+csvFile.addEventListener("change",()=>{
+ selectedFile=csvFile.files[0]||null;
+ importBtn.disabled=!selectedFile;
+ fileInfo.textContent=selectedFile?`File dipilih: ${selectedFile.name} (${Math.round(selectedFile.size/1024)} KB)`:"";
+ result.textContent="";
+});
+
+function parseCSV(text){
+ const lines=text.replace(/^\uFEFF/,"").split(/\r?\n/).filter(x=>x.trim());
+ if(lines.length<2) throw new Error("CSV tidak memiliki data.");
+ const parseLine=line=>{
+  const out=[];let cur="",quoted=false;
+  for(let i=0;i<line.length;i++){
+   const c=line[i];
+   if(c==='"' && line[i+1]==='"'){cur+='"';i++;continue}
+   if(c==='"'){quoted=!quoted;continue}
+   if(c===','&&!quoted){out.push(cur.trim());cur="";continue}
+   cur+=c;
+  }
+  out.push(cur.trim());return out;
+ };
+ const headers=parseLine(lines[0]).map(x=>x.trim());
+ return lines.slice(1).map(line=>{
+  const vals=parseLine(line),o={};
+  headers.forEach((h,i)=>o[h]=vals[i]??"");
+  return o;
+ }).filter(o=>Object.values(o).some(v=>v!==""));
+}
+
+function normalize(row,index){
+ return {
+  no: row.no || String(index+1),
+  nomor_ka_hulu: row.nomor_ka_hulu || "",
+  nomor_ka_hilir: row.nomor_ka_hilir || "",
+  nama_ka: row.nama_ka || "",
+  relasi: row.relasi || "",
+  kelas_ka: row.kelas_ka || "",
+  jam_dat: row.jam_dat || "",
+  jam_ber: row.jam_ber || "",
+  jalur: row.jalur || ""
+ };
+}
+
+importBtn.addEventListener("click",async()=>{
+ if(!selectedFile)return;
+ if(!confirm("Import CSV ini akan MENGGANTI seluruh data jadwal di station_data/global. Lanjutkan?"))return;
+ importBtn.disabled=true;progress.style.display="block";bar.style.width="10%";result.textContent="Membaca CSV...";
+ try{
+  const text=await selectedFile.text();
+  const parsed=parseCSV(text);
+  const schedules=parsed.map(normalize);
+  if(!schedules.length)throw new Error("Tidak ada jadwal yang dapat dibaca.");
+  bar.style.width="45%";result.textContent=`Ditemukan ${schedules.length} jadwal. Menyimpan ke Firestore...`;
+  await stationRef().set({schedules:schedules,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  bar.style.width="100%";
+  result.innerHTML=`<b>Berhasil.</b> ${schedules.length} jadwal telah disimpan ke Firestore.`;
+  await loadFirestore();
+ }catch(e){console.error(e);result.textContent="Import gagal: "+e.message}
+ finally{importBtn.disabled=!selectedFile;setTimeout(()=>{progress.style.display="none";bar.style.width="0"},700)}
+});
+
+reloadBtn.addEventListener("click",loadFirestore);
+
+async function loadFirestore(){
+ tableBox.innerHTML='<div class="empty">Memuat...</div>';
+ try{
+  const snap=await stationRef().get();
+  const data=snap.exists?snap.data():{};
+  const schedules=Array.isArray(data.schedules)?data.schedules:[];
+  countBadge.textContent=schedules.length+" jadwal";
+  if(!schedules.length){tableBox.innerHTML='<div class="empty">Belum ada jadwal di Firestore.</div>';return}
+  let html='<div class="table-wrap"><table><thead><tr><th>No</th><th>KA Hulu</th><th>KA Hilir</th><th>Nama</th><th>Relasi</th><th>Kelas</th><th>DAT</th><th>BER</th><th>Jalur</th></tr></thead><tbody>';
+  schedules.forEach((s,i)=>html+=`<tr><td>${esc(s.no||i+1)}</td><td>${esc(s.nomor_ka_hulu)}</td><td>${esc(s.nomor_ka_hilir)}</td><td>${esc(s.nama_ka)}</td><td>${esc(s.relasi)}</td><td>${esc(s.kelas_ka)}</td><td>${esc(s.jam_dat)}</td><td>${esc(s.jam_ber)}</td><td>${esc(s.jalur)}</td></tr>`);
+  html+='</tbody></table></div>';tableBox.innerHTML=html;
+ }catch(e){console.error(e);tableBox.innerHTML='<div class="empty">Gagal memuat: '+esc(e.message)+'</div>'}
+}
+</script>
+</body>
+</html>
