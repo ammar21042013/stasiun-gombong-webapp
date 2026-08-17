@@ -849,22 +849,37 @@
     </div>
 
     <script src="firebase-config.js"></script>
+    <script>
+        // Bridge firebase-config.js (classic script) into the module scope.
+        try { window.__GOMBONG_FIREBASE_CONFIG__ = firebaseConfig; } catch (e) {
+            window.__GOMBONG_FIREBASE_CONFIG__ = null;
+        }
+    </script>
+    <div id="firebase-diagnostic" style="position:fixed;left:10px;right:10px;bottom:58px;z-index:99999;background:#fff;border:2px solid #1464f4;border-radius:12px;padding:12px;box-shadow:0 4px 18px rgba(0,0,0,.18);font:13px Arial,sans-serif;display:block">
+      <div style="font-weight:700;color:#1464f4;margin-bottom:6px">Status Website & Firestore</div>
+      <div id="firebase-status">Memeriksa...</div>
+      <button onclick="document.getElementById('firebase-diagnostic').style.display='none'" style="margin-top:7px;border:0;border-radius:8px;padding:6px 10px;background:#e9edf2">Tutup</button>
+    </div>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'stasiun-gombong-gb';
-        const appFirebaseConfig = (typeof firebaseConfig !== 'undefined') ? firebaseConfig : ((typeof window.firebaseConfig !== 'undefined') ? window.firebaseConfig : (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null));
+        const appFirebaseConfig = window.__GOMBONG_FIREBASE_CONFIG__ || ((typeof window.firebaseConfig !== 'undefined') ? window.firebaseConfig : (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null));
 
         let app, db, auth;
+        function diag(msg, ok=false) { const el=document.getElementById('firebase-status'); if(el) el.innerHTML += `<div style=\"margin:3px 0;color:${ok?'#087f23':'#444'}\">${ok?'🟢':'🔵'} ${msg}</div>`; }
         try {
             if (!appFirebaseConfig) throw new Error("firebaseConfig tidak ditemukan. Pastikan firebase-config.js tersedia.");
+            diag('Konfigurasi Firebase ditemukan', true);
             app = initializeApp(appFirebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
+            diag('Firebase berhasil diinisialisasi', true);
         } catch (e) {
             console.warn("Firebase init fallback", e);
+            diag('Firebase gagal: ' + e.message, false);
         }
 
         const defaultSchedules = [
@@ -1269,8 +1284,10 @@
         function setupFirestoreSync() {
             if (!db) {
                 console.warn('Firestore belum siap.');
+                diag('Firestore belum siap', false);
                 return;
             }
+            diag('Mencoba membaca Firestore...', false);
 
             const docRef = doc(
                 db,
@@ -1285,6 +1302,7 @@
             const applyFirestoreData = (docSnap) => {
                 if (!docSnap.exists()) {
                     console.warn('Dokumen jadwal Firestore tidak ditemukan:', appId);
+                    diag('Dokumen station_data/global TIDAK ditemukan', false);
                     renderHomeSchedules();
                     renderJadwal();
                     return;
@@ -1292,10 +1310,12 @@
 
                 const data = docSnap.data() || {};
                 console.log('Firestore jadwal diterima:', data);
+                diag('Dokumen station_data/global ditemukan', true);
 
                 if (Array.isArray(data.schedules)) {
                     const converted = makeDisplaySchedules(data.schedules);
                     console.log('Jumlah jadwal Firestore:', data.schedules.length, '→ tampilan:', converted.length);
+                    diag(`Firestore berisi ${data.schedules.length} jadwal → ${converted.length} baris tampilan`, converted.length > 0);
 
                     if (converted.length > 0) {
                         appData.schedules = converted;
@@ -1318,6 +1338,7 @@
             // Baca sekali segera setelah halaman dibuka, lalu lanjutkan realtime.
             getDoc(docRef).then(applyFirestoreData).catch(error => {
                 console.error('Firestore getDoc error:', error);
+                diag('Firestore getDoc error: ' + error.message, false);
                 // Jangan mengosongkan jadwal; data default/cache tetap ditampilkan.
                 renderHomeSchedules();
                 renderJadwal();
@@ -1325,6 +1346,7 @@
 
             onSnapshot(docRef, applyFirestoreData, (error) => {
                 console.error('Firestore onSnapshot error:', error);
+                diag('Firestore realtime error: ' + error.message, false);
                 renderHomeSchedules();
                 renderJadwal();
             });
@@ -2086,10 +2108,10 @@
 })();
 </script>
 
-<div id="update-badge">Update v12<small>Stasiun Gombong Web App</small></div>
+<div id="update-badge">Update v13<small>Stasiun Gombong Web App</small></div>
 <script>
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js?v=12').catch(()=>{}));
+  window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js?v=13').catch(()=>{}));
 }
 </script>
 </body>
