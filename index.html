@@ -855,7 +855,7 @@
         import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'stasiun-gombong-gb';
-        const appFirebaseConfig = (typeof window.firebaseConfig !== 'undefined') ? window.firebaseConfig : (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null);
+        const appFirebaseConfig = (typeof firebaseConfig !== 'undefined') ? firebaseConfig : ((typeof window.firebaseConfig !== 'undefined') ? window.firebaseConfig : (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null));
 
         let app, db, auth;
         try {
@@ -1019,6 +1019,7 @@
                     }
                 } catch (e) {
                     console.warn("Firebase Auth offline/nonaktif; pembacaan publik tetap dilanjutkan:", e);
+                    if (db) console.log("Firestore tetap digunakan tanpa login admin.");
                 }
             }
 
@@ -2085,10 +2086,10 @@
 })();
 </script>
 
-<div id="update-badge">Update v10<small>Stasiun Gombong Web App</small></div>
+<div id="update-badge">Update v12<small>Stasiun Gombong Web App</small></div>
 <script>
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js?v=4').catch(()=>{}));
+  window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js?v=12').catch(()=>{}));
 }
 </script>
 </body>
