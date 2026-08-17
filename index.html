@@ -557,7 +557,7 @@
                         <div class="bg-slate-900 text-white p-4 rounded-xl font-mono text-xs space-y-2 shadow-inner">
                             <div class="flex justify-between items-center text-slate-400 border-b border-slate-700 pb-2">
                                 <span>Arah Purwokerto / Barat</span>
-                                <span class="text-kai-orange font-bold">Stasiun Gombong (GB)</span>
+                                <span class="text-green-600 font-bold">Stasiun Gombong (GB)</span>
                                 <span>Arah Kutoarjo / Timur</span>
                             </div>
                             <div class="py-2 space-y-1">
@@ -849,51 +849,22 @@
     </div>
 
     <script src="firebase-config.js"></script>
-    <script>
-        // Bridge firebase-config.js (classic script) into the module scope.
-        try { window.__GOMBONG_FIREBASE_CONFIG__ = firebaseConfig; } catch (e) {
-            window.__GOMBONG_FIREBASE_CONFIG__ = null;
-        }
-    </script>
-    <div id="firebase-diagnostic" style="position:fixed;left:10px;right:10px;bottom:58px;z-index:99999;background:#fff;border:2px solid #1464f4;border-radius:12px;padding:12px;box-shadow:0 4px 18px rgba(0,0,0,.18);font:13px Arial,sans-serif;display:block">
-      <div style="font-weight:700;color:#1464f4;margin-bottom:6px">Status Website & Firestore</div>
-      <div id="firebase-status">Memeriksa...</div>
-      <button onclick="document.getElementById('firebase-diagnostic').style.display='none'" style="margin-top:7px;border:0;border-radius:8px;padding:6px 10px;background:#e9edf2">Tutup</button>
-    </div>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-    <script>
-        // Firebase Compat: lebih aman untuk Chrome Android/tablet dan tidak bergantung pada ES Module import.
-        const initializeApp = (config) => firebase.initializeApp(config);
-        const getAuth = (app) => firebase.auth(app);
-        const getFirestore = (app) => firebase.firestore(app);
-        const signInAnonymously = (auth) => auth.signInAnonymously();
-        const signInWithCustomToken = (auth, token) => auth.signInWithCustomToken(token);
-        const doc = (db, ...path) => db.doc(path.join('/'));
-        const getDoc = (ref) => ref.get();
-        const setDoc = (ref, data, options) => ref.set(data, options);
-        const updateDoc = (ref, data) => ref.update(data);
-        const onSnapshot = (ref, next, error) => ref.onSnapshot(next, error);
-        const collection = (db, ...path) => db.collection(path.join('/'));
-        const query = (ref, ...constraints) => ref;
-        const getDocs = (ref) => ref.get();
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'stasiun-gombong-gb';
-        const appFirebaseConfig = window.__GOMBONG_FIREBASE_CONFIG__ || ((typeof window.firebaseConfig !== 'undefined') ? window.firebaseConfig : (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null));
+        const appFirebaseConfig = (typeof firebaseConfig !== 'undefined') ? firebaseConfig : ((typeof window.firebaseConfig !== 'undefined') ? window.firebaseConfig : (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null));
 
         let app, db, auth;
-        function diag(msg, ok=false) { const el=document.getElementById('firebase-status'); if(el) el.innerHTML += `<div style=\"margin:3px 0;color:${ok?'#087f23':'#444'}\">${ok?'🟢':'🔵'} ${msg}</div>`; }
         try {
             if (!appFirebaseConfig) throw new Error("firebaseConfig tidak ditemukan. Pastikan firebase-config.js tersedia.");
-            diag('Konfigurasi Firebase ditemukan', true);
             app = initializeApp(appFirebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
-            diag('Firebase berhasil diinisialisasi', true);
         } catch (e) {
             console.warn("Firebase init fallback", e);
-            diag('Firebase gagal: ' + e.message, false);
         }
 
         const defaultSchedules = [
@@ -1170,11 +1141,59 @@
         }
 
         function formatRelation(value) {
-            const relation = String(value || '').trim();
-            if (!relation) return '-';
-            // Import data is expected to already contain the complete relation,
-            // e.g. "Kutoarjo (KTA) - Pasarsenen (PSE)".
-            return relation;
+            const raw = String(value || '').trim();
+            if (!raw) return '-';
+
+            // Ubah kode relasi dari CSV/Firestore menjadi nama stasiun lengkap.
+            // Contoh: BD-SLO -> Bandung (BD) - Solo Balapan (SLO).
+            const stationNames = {
+                KTA: 'Kutoarjo',
+                PSE: 'Pasarsenen',
+                ML: 'Malang',
+                BD: 'Bandung',
+                SLO: 'Solo Balapan',
+                YK: 'Yogyakarta',
+                SGU: 'Surabaya Gubeng',
+                PWT: 'Purwokerto',
+                GMR: 'Gambir',
+                MN: 'Madiun',
+                KAC: 'Kiaracondong',
+                CP: 'Cilacap',
+                PWS: 'Purwosari',
+                BL: 'Blitar',
+                LPN: 'Lempuyangan',
+                JG: 'Jatibarang',
+                CN: 'Cirebon',
+                TG: 'Tegal',
+                SMT: 'Semarang Tawang'
+            };
+
+            // Jika sudah berupa nama lengkap, jangan diubah lagi.
+            if (!/^[A-Z]{2,4}(?:-[A-Z]{2,4})+$/.test(raw)) return raw;
+
+            return raw.split('-').map(code => {
+                const name = stationNames[code] || code;
+                return `${name} (${code})`;
+            }).join(' - ');
+        }
+
+        function resolveTrainNumber(raw) {
+            const direct = raw.nomor_ka || raw.trainNumber || raw.no_ka || raw.ka;
+            if (direct) return String(direct);
+
+            const hulu = raw.nomor_ka_hulu || raw.ka_hulu || '';
+            const hilir = raw.nomor_ka_hilir || raw.ka_hilir || '';
+            if (hulu) return String(hulu);
+            if (hilir) return String(hilir);
+
+            // Data CSV lama tidak mengisi nomor KA untuk BIMA 00:55.
+            // Berdasarkan pasangan relasinya, BIMA yang berangkat ke arah GMR adalah KA 7.
+            const name = String(raw.nama_ka || raw.name || '').trim().toUpperCase();
+            const relation = String(raw.relasi || raw.relation || '').trim().toUpperCase();
+            if (name === 'BIMA' && relation === 'SLO-GMR') return '7';
+            if (name === 'BIMA' && relation === 'GMR-SGU') return '8';
+
+            return '-';
         }
 
         function isDirect(value) {
@@ -1197,7 +1216,7 @@
                     const base = {
                         baseId: raw.id ?? `firestore-${index + 1}`,
                         name: raw.nama_ka || raw.name || '-',
-                        trainNumber: raw.nomor_ka || raw.nomor_ka_hulu || raw.nomor_ka_hilir || raw.trainNumber || raw.no_ka || raw.ka || raw.ka_hulu || raw.ka_hilir || '-',
+                        trainNumber: resolveTrainNumber(raw),
                         relation: formatRelation(raw.relasi || raw.relation || ''),
                         className: formatClass(raw.kelas_ka || raw.kelas || raw.className || ''),
                         jalur: raw.jalur ?? raw.track ?? '-'
@@ -1206,7 +1225,35 @@
                     const dat = String(raw.jam_dat ?? raw.arrival ?? '').trim();
                     const ber = String(raw.jam_ber ?? raw.departure ?? '').trim();
 
-                    if (dat) {
+                    const datDirect = isDirect(dat);
+                    const berDirect = isDirect(ber);
+
+                    // Semua kereta bertanda "LS" (Langsung) ditampilkan di
+                    // tab Keberangkatan. Jika tanda LS berada di kolom DAT,
+                    // gunakan jam BER sebagai jam keberangkatannya. Dengan
+                    // begitu label "Langsung" selalu berada tepat di atas jam,
+                    // bukan di atas tanda "-".
+                    if (datDirect) {
+                        if (ber && !berDirect) {
+                            result.push({
+                                id: `${base.baseId}-berangkat-langsung`,
+                                type: 'berangkat',
+                                name: base.name,
+                                trainNumber: base.trainNumber,
+                                relation: base.relation,
+                                className: base.className,
+                                jalur: base.jalur,
+                                time: ber,
+                                direct: true
+                            });
+                        } else if (berDirect) {
+                            // Tidak ada jam nyata pada pasangan DAT/BER ini,
+                            // jadi jangan membuat tampilan "Langsung" + "-".
+                            // Data akan tetap dipertahankan tanpa membuat
+                            // baris kosong yang membingungkan pengguna.
+                        }
+                    } else if (dat) {
+                        // Jadwal kedatangan normal.
                         result.push({
                             id: `${base.baseId}-datang`,
                             type: 'datang',
@@ -1215,12 +1262,13 @@
                             relation: base.relation,
                             className: base.className,
                             jalur: base.jalur,
-                            time: isDirect(dat) ? '' : dat,
-                            direct: isDirect(dat)
+                            time: dat,
+                            direct: false
                         });
                     }
 
-                    if (ber) {
+                    if (ber && !berDirect && !datDirect) {
+                        // Jadwal keberangkatan normal.
                         result.push({
                             id: `${base.baseId}-berangkat`,
                             type: 'berangkat',
@@ -1229,8 +1277,23 @@
                             relation: base.relation,
                             className: base.className,
                             jalur: base.jalur,
-                            time: isDirect(ber) ? '' : ber,
-                            direct: isDirect(ber)
+                            time: ber,
+                            direct: false
+                        });
+                    } else if (berDirect && !datDirect && dat) {
+                        // Jika LS justru berada di kolom BER tetapi DAT
+                        // mempunyai jam nyata, jadikan tetap keberangkatan
+                        // langsung dan gunakan jam DAT agar tidak tampil "-".
+                        result.push({
+                            id: `${base.baseId}-berangkat-langsung`,
+                            type: 'berangkat',
+                            name: base.name,
+                            trainNumber: base.trainNumber,
+                            relation: base.relation,
+                            className: base.className,
+                            jalur: base.jalur,
+                            time: dat,
+                            direct: true
                         });
                     }
 
@@ -1239,16 +1302,18 @@
 
                 // Backward compatibility for any old display records.
                 if (raw && raw.type && raw.time !== undefined) {
+                    const legacyDirect = !!raw.direct || isDirect(raw.status);
                     result.push({
                         id: raw.id ?? `legacy-${index + 1}`,
-                        type: raw.type,
+                        // Semua data Langsung dipaksa masuk ke Keberangkatan.
+                        type: legacyDirect ? 'berangkat' : raw.type,
                         name: raw.name || '-',
                         trainNumber: raw.trainNumber || '-',
                         relation: formatRelation(raw.relation || ''),
                         className: formatClass(raw.className || raw.kelas || ''),
                         jalur: raw.jalur ?? raw.track ?? '-',
                         time: raw.time || '',
-                        direct: !!raw.direct || isDirect(raw.status)
+                        direct: legacyDirect
                     });
                 }
             });
@@ -1298,10 +1363,8 @@
         function setupFirestoreSync() {
             if (!db) {
                 console.warn('Firestore belum siap.');
-                diag('Firestore belum siap', false);
                 return;
             }
-            diag('Mencoba membaca Firestore...', false);
 
             const docRef = doc(
                 db,
@@ -1314,9 +1377,8 @@
             );
 
             const applyFirestoreData = (docSnap) => {
-                if (!docSnap.exists) {
+                if (!docSnap.exists()) {
                     console.warn('Dokumen jadwal Firestore tidak ditemukan:', appId);
-                    diag('Dokumen station_data/global TIDAK ditemukan', false);
                     renderHomeSchedules();
                     renderJadwal();
                     return;
@@ -1324,12 +1386,10 @@
 
                 const data = docSnap.data() || {};
                 console.log('Firestore jadwal diterima:', data);
-                diag('Dokumen station_data/global ditemukan', true);
 
                 if (Array.isArray(data.schedules)) {
                     const converted = makeDisplaySchedules(data.schedules);
                     console.log('Jumlah jadwal Firestore:', data.schedules.length, '→ tampilan:', converted.length);
-                    diag(`Firestore berisi ${data.schedules.length} jadwal → ${converted.length} baris tampilan`, converted.length > 0);
 
                     if (converted.length > 0) {
                         appData.schedules = converted;
@@ -1352,7 +1412,6 @@
             // Baca sekali segera setelah halaman dibuka, lalu lanjutkan realtime.
             getDoc(docRef).then(applyFirestoreData).catch(error => {
                 console.error('Firestore getDoc error:', error);
-                diag('Firestore getDoc error: ' + error.message, false);
                 // Jangan mengosongkan jadwal; data default/cache tetap ditampilkan.
                 renderHomeSchedules();
                 renderJadwal();
@@ -1360,7 +1419,6 @@
 
             onSnapshot(docRef, applyFirestoreData, (error) => {
                 console.error('Firestore onSnapshot error:', error);
-                diag('Firestore realtime error: ' + error.message, false);
                 renderHomeSchedules();
                 renderJadwal();
             });
@@ -1493,7 +1551,7 @@
                 }
 
                 const directLabel = schedule.direct
-                    ? '<div class="text-[9px] text-kai-orange font-bold uppercase tracking-wide">Langsung</div>'
+                    ? '<div class="text-[9px] text-green-600 font-bold tracking-wide">Langsung</div>'
                     : '';
 
                 container.innerHTML += `
@@ -1553,7 +1611,7 @@
 
             filtered.forEach(s => {
                 const directLabel = s.direct
-                    ? '<div class="text-[9px] text-kai-orange font-bold uppercase tracking-wide mb-0.5">Langsung</div>'
+                    ? '<div class="text-[9px] text-green-600 font-bold tracking-wide mb-0.5">Langsung</div>'
                     : '';
 
                 const tr = document.createElement('tr');
@@ -1612,7 +1670,7 @@
 
             appData.schedules.forEach(s => {
                 const direct = s.direct
-                    ? '<div class="text-[9px] text-kai-orange font-bold">Langsung</div>'
+                    ? '<div class="text-[9px] text-green-600 font-bold">Langsung</div>'
                     : '';
 
                 tbodyJadwal.innerHTML += `
@@ -1822,21 +1880,26 @@
                     countdownText = `Segera berangkat`;
                 }
 
+                const directLabel = schedule.direct
+                    ? '<div class="text-[9px] text-green-600 font-bold tracking-wide">Langsung</div>'
+                    : '';
+
                 container.innerHTML += `
-                    <div class="flex items-center justify-between border-b pb-2.5 last:border-0 last:pb-0">
+                    <div class="flex items-center justify-between border-b pb-2.5 last:border-0 last:pb-0 cursor-pointer" onclick="switchPage('jadwal')" title="Lihat semua jadwal">
                         <div class="flex items-center gap-3">
                             <div class="bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1 text-kai-blue font-bold text-sm min-w-[60px] text-center shadow-sm">
-                                ${schedule.time}
+                                ${directLabel}
+                                <div>${escapeHtml(schedule.time || '-')}</div>
                             </div>
                             <div>
                                 <div class="flex items-center gap-2">
-                                    <p class="font-bold text-sm text-gray-800">${schedule.name}</p>
+                                    <p class="font-bold text-sm text-gray-800">${escapeHtml(schedule.name || '-')}</p>
                                     <span class="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full font-medium">${countdownText}</span>
                                 </div>
-                                <p class="text-xs text-gray-500 truncate max-w-[200px] sm:max-w-[260px]">Relasi: ${schedule.relation}</p>
+                                <p class="text-xs text-gray-500 truncate max-w-[200px] sm:max-w-[260px]">Relasi: ${escapeHtml(formatRelation(schedule.relation || ''))}</p>
                             </div>
                         </div>
-                        <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+                        <i class="fa-solid fa-chevron-right text-gray-300 text-xs pointer-events-none"></i>
                     </div>
                 `;
             });
