@@ -974,16 +974,20 @@
             renderJadwal();
             renderFasilitas();
             renderAdminData();
+            setupFirestoreSync();
             startBMKGClock();
 
-            // Jadwal publik dibaca dari Firestore tanpa memerlukan login admin.
             if (auth) {
                 try {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
-                    else await signInAnonymously(auth);
-                } catch (e) { console.warn('Auth anonim tidak tersedia, lanjut membaca data publik:', e); }
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (e) {
+                    console.warn("Auth/Cloud offline mode active:", e);
+                }
             }
-            setupFirestoreSync();
             
             document.getElementById('search-jadwal').addEventListener('input', (e) => {
                 searchQuery = e.target.value.toLowerCase();
@@ -1081,74 +1085,128 @@
             clockTimer = setInterval(updateClock, 1000);
         }
 
-        function loadLocalStorage() {
-            const storedSchedules = localStorage.getItem('gombong_schedules');
-            const storedFacilities = localStorage.getItem('gombong_facilities');
-            if (storedSchedules) {
-                try {
-                    appData.schedules = JSON.parse(storedSchedules);
-                } catch(err) {
-                    appData.schedules = [...defaultSchedules];
-                }
-            } else {
-                appData.schedules = [...defaultSchedules];
-            }
-            
-            if (storedFacilities) {
-                try {
-                    appData.facilities = JSON.parse(storedFacilities);
-                } catch(err) {
-                    appData.facilities = [...defaultFacilities];
-                }
-            } else {
-                appData.facilities = [...defaultFacilities];
-            }
-
-            if (appData.schedules && appData.schedules.length > 0) {
-                appData.schedules.sort((a, b) => (a.time || '00:00').localeCompare(b.time || '00:00'));
-            }
+        function normalizeSchedule(s, index = 0) {
+            const name = s?.name ?? s?.nama_ka ?? '';
+            const relation = s?.relation ?? s?.relasi ?? '';
+            const arrival = s?.arrivalTime ?? s?.jam_dat ?? s?.jam_datang ?? '';
+            const departure = s?.departureTime ?? s?.jam_ber ?? s?.jam_berangkat ?? '';
+            const classCode = s?.classCode ?? s?.kelas_ka ?? '';
+            const no = s?.no ?? (index + 1);
+            return {
+                ...s,
+                id: s?.id ?? no,
+                no,
+                name,
+                relation,
+                arrivalTime: arrival,
+                departureTime: departure,
+                classCode,
+                // Keep legacy fields available for the existing admin functions.
+                time: s?.time ?? departure ?? arrival,
+                type: s?.type ?? 'berangkat'
+            };
         }
 
-        // Membaca jadwal publik langsung dari Firestore.
-        // Website utama tidak perlu login admin untuk membaca jadwal.
-        function normalizeFirestoreSchedules(rows) {
-            if (!Array.isArray(rows)) return [];
-            const stationNames = {GMR:'Gambir',PSE:'Pasarsenen',BD:'Bandung',ML:'Malang',YK:'Yogyakarta',SGU:'Surabaya Gubeng',SLO:'Solo Balapan',PWS:'Purwosari',KTA:'Kutoarjo',KAC:'Kiaracondong',BL:'Blitar',LPN:'Lempuyangan',CN:'Cirebon',PWT:'Purwokerto',CP:'Cilacap',MN:'Madiun',TG:'Tegal',SMT:'Semarang Tawang',JG:'Jombang',KTG:'Ketapang',JR:'Jember'};
-            const expandRelation = raw => (raw||'').split('-').map(code=>{const c=code.trim(); return stationNames[c] ? `${stationNames[c]} (${c})` : c;}).join(' - ');
-            const classLabel = value => value==='EKS'?'Eksekutif':value==='EKO'?'Ekonomi':value==='EKS+EKO'?'Eksekutif dan Ekonomi':(value||'');
-            const normalized=[];
-            rows.forEach((r,index)=>{ if(!r)return; const baseId=Number(r.no)||(index+1); const name=r.nama_ka||''; const relation=expandRelation(r.relasi||''); const kelas=classLabel(r.kelas_ka||''); const trainNumber=[r.nomor_ka_hulu,r.nomor_ka_hilir].filter(Boolean).join(' / '); if(r.jam_ber) normalized.push({id:baseId*2,type:'berangkat',name,relation,time:r.jam_ber,classLabel:kelas,trainNumber,jalur:r.jalur||''}); if(r.jam_dat) normalized.push({id:baseId*2+1,type:'datang',name,relation,time:r.jam_dat,classLabel:kelas,trainNumber,jalur:r.jalur||''}); });
-            return normalized;
+        function getScheduleTime(s, tab = currentJadwalTab) {
+            return tab === 'datang' ? (s.arrivalTime || s.jam_dat || s.time || '') : (s.departureTime || s.jam_ber || s.time || '');
+        }
+
+        function classLabel(code) {
+            const c = String(code || '').trim().toUpperCase();
+            if (c === 'EKS') return 'Eksekutif';
+            if (c === 'EKO') return 'Ekonomi';
+            if (c === 'EKS+EKO' || c === 'EKO+EKS') return 'Eksekutif dan Ekonomi';
+            if (c === 'LS') return 'Ls';
+            return code || '';
+        }
+
+        function formatRelation(relation) {
+            const raw = String(relation || '').trim();
+            if (!raw) return '';
+            const map = {
+                'KTA-PSE': 'Kutoarjo (KTA) - Pasarsenen (PSE)',
+                'PSE-KTA': 'Pasarsenen (PSE) - Kutoarjo (KTA)',
+                'ML-BD': 'Malang (ML) - Bandung (BD)',
+                'BD-ML': 'Bandung (BD) - Malang (ML)',
+                'BD-SLO': 'Bandung (BD) - Solo Balapan (SLO)',
+                'SLO-BD': 'Solo Balapan (SLO) - Bandung (BD)',
+                'PSE-YK': 'Pasarsenen (PSE) - Yogyakarta (YK)',
+                'YK-PSE': 'Yogyakarta (YK) - Pasarsenen (PSE)',
+                'BD-SGU': 'Bandung (BD) - Surabaya Gubeng (SGU)',
+                'SGU-BD': 'Surabaya Gubeng (SGU) - Bandung (BD)',
+                'SLO-PSE': 'Solo Balapan (SLO) - Pasarsenen (PSE)',
+                'PSE-SLO': 'Pasarsenen (PSE) - Solo Balapan (SLO)',
+                'PWT-SLO': 'Purwokerto (PWT) - Solo Balapan (SLO)',
+                'SLO-PWT': 'Solo Balapan (SLO) - Purwokerto (PWT)',
+                'GMR-SGU': 'Gambir (GMR) - Surabaya Gubeng (SGU)',
+                'SGU-GMR': 'Surabaya Gubeng (SGU) - Gambir (GMR)',
+                'GMR-YK': 'Gambir (GMR) - Yogyakarta (YK)',
+                'YK-GMR': 'Yogyakarta (YK) - Gambir (GMR)',
+                'MN-PSE': 'Madiun (MN) - Pasarsenen (PSE)',
+                'PSE-MN': 'Pasarsenen (PSE) - Madiun (MN)',
+                'PSE-SGU': 'Pasarsenen (PSE) - Surabaya Gubeng (SGU)',
+                'SGU-PSE': 'Surabaya Gubeng (SGU) - Pasarsenen (PSE)',
+                'PSE-KAC': 'Pasarsenen (PSE) - Kiaracondong (KAC)',
+                'KAC-PSE': 'Kiaracondong (KAC) - Pasarsenen (PSE)',
+                'KTA-CP': 'Kutoarjo (KTA) - Cilacap (CP)',
+                'CP-KTA': 'Cilacap (CP) - Kutoarjo (KTA)',
+                'KAC-KTA': 'Kiaracondong (KAC) - Kutoarjo (KTA)',
+                'KTA-KAC': 'Kutoarjo (KTA) - Kiaracondong (KAC)'
+            };
+            if (map[raw]) return map[raw];
+            if (/^[A-Z]{2,4}-[A-Z]{2,4}$/.test(raw)) {
+                const names = {KTA:'Kutoarjo',PSE:'Pasarsenen',ML:'Malang',BD:'Bandung',SLO:'Solo Balapan',YK:'Yogyakarta',SGU:'Surabaya Gubeng',PWT:'Purwokerto',GMR:'Gambir',MN:'Madiun',KAC:'Kiaracondong',CP:'Cilacap'};
+                const [a,b] = raw.split('-');
+                return `${names[a] || a} (${a}) - ${names[b] || b} (${b})`;
+            }
+            return raw;
+        }
+
+        function loadLocalStorage() {
+            const storedFacilities = localStorage.getItem('gombong_facilities');
+            if (storedFacilities) {
+                try { appData.facilities = JSON.parse(storedFacilities); }
+                catch(err) { appData.facilities = [...defaultFacilities]; }
+            } else appData.facilities = [...defaultFacilities];
+            // Do not use old local schedule data as the source of truth.
+            // Firestore is the authoritative source for train schedules.
         }
 
         function setupFirestoreSync() {
             if (!db) return;
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'station_data', 'global');
             onSnapshot(docRef, (docSnap) => {
-                if (!docSnap.exists()) { console.warn('station_data/global belum ditemukan.'); return; }
-                const data = docSnap.data();
-                if (Array.isArray(data.schedules)) { const schedules=normalizeFirestoreSchedules(data.schedules); if(schedules.length){ appData.schedules=schedules; appData.schedules.sort((a,b)=>{const ta=a.time==='Ls'?'99:99':(a.time||'99:99'); const tb=b.time==='Ls'?'99:99':(b.time||'99:99'); return ta.localeCompare(tb);}); } }
-                if (Array.isArray(data.facilities)) appData.facilities=data.facilities;
-                renderHomeSchedules(); renderJadwal(); renderFasilitas(); renderAdminData();
-            }, error => console.error('Firestore public sync error:',error));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (Array.isArray(data.schedules)) {
+                        appData.schedules = data.schedules.map(normalizeSchedule);
+                    }
+                    if (Array.isArray(data.facilities)) appData.facilities = data.facilities;
+                    appData.schedules.sort((a, b) => timeToMinutes(a.departureTime || a.jam_ber || a.time || '23:59') - timeToMinutes(b.departureTime || b.jam_ber || b.time || '23:59'));
+                } else {
+                    console.warn('Firestore station_data/global belum tersedia. Jadwal default tidak ditulis agar data tidak tertimpa.');
+                }
+                renderHomeSchedules();
+                renderJadwal();
+                renderFasilitas();
+                renderAdminData();
+            }, (error) => {
+                console.error('Sync error:', error);
+                // Keep the current UI, but never replace Firestore schedules with legacy localStorage schedules.
+                renderHomeSchedules();
+                renderJadwal();
+            });
         }
 
         async function saveDataToCloud() {
             if (auth && auth.currentUser && db) {
                 try {
                     const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'station_data', 'global');
-                    await setDoc(docRef, {
-                        schedules: appData.schedules,
-                        facilities: appData.facilities
-                    });
+                    await setDoc(docRef, { schedules: appData.schedules, facilities: appData.facilities });
                 } catch (e) {
-                    console.error("Cloud save failed, saving local", e);
-                    localStorage.setItem('gombong_schedules', JSON.stringify(appData.schedules));
+                    console.error('Cloud save failed', e);
                     localStorage.setItem('gombong_facilities', JSON.stringify(appData.facilities));
                 }
-            } else {
-                localStorage.setItem('gombong_schedules', JSON.stringify(appData.schedules));
-                localStorage.setItem('gombong_facilities', JSON.stringify(appData.facilities));
             }
         }
 
@@ -1193,80 +1251,54 @@
             const container = document.getElementById('home-schedule-container');
             if (!container) return;
             container.innerHTML = '';
-            
-            if (!appData.schedules || appData.schedules.length === 0) {
+            const departures = (appData.schedules || []).map(normalizeSchedule).filter(s => s.departureTime || s.jam_ber || s.time);
+            if (!departures.length) {
                 container.innerHTML = '<p class="text-sm text-gray-500 italic text-center py-2">Tidak ada jadwal tersimpan.</p>';
                 return;
             }
-
             const now = new Date();
             const currentTotalMinutes = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
-            
-            const departures = appData.schedules.filter(s => s && s.type === 'berangkat');
-            
             departures.forEach(s => {
-                const scheduleMinutes = timeToMinutes(s.time || '00:00');
+                const scheduleMinutes = timeToMinutes(s.departureTime || s.jam_ber || s.time || '00:00');
                 let diff = scheduleMinutes - currentTotalMinutes;
                 if (diff < 0) diff += 1440;
                 s._diff = diff;
             });
-
-            departures.sort((a, b) => a._diff - b._diff);
-            
-            const nearestDepartures = departures.slice(0, 3);
-            if (nearestDepartures.length === 0) {
-                container.innerHTML = '<p class="text-sm text-gray-500 italic text-center py-2">Tidak ada keberangkatan terdekat.</p>';
-                return;
-            }
-
+            departures.sort((a,b) => a._diff-b._diff);
+            const nearestDepartures = departures.slice(0,3);
             nearestDepartures.forEach(schedule => {
-                const totalMinsLeft = Math.floor(schedule._diff);
-                const hoursLeft = Math.floor(totalMinsLeft / 60);
-                const minsLeft = totalMinsLeft % 60;
-                let countdownText = '';
-                if (hoursLeft > 0) {
-                    countdownText = `${hoursLeft} jam ${minsLeft} mnt lagi`;
-                } else if (minsLeft > 0) {
-                    countdownText = `${minsLeft} menit lagi`;
-                } else {
-                    countdownText = `Segera berangkat`;
-                }
-
-                container.innerHTML += `
-                    <div class="flex items-center justify-between border-b pb-2.5 last:border-0 last:pb-0">
-                        <div class="flex items-center gap-3">
-                            <div class="bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1 text-kai-blue font-bold text-sm min-w-[60px] text-center shadow-sm">
-                                ${schedule.time}
-                            </div>
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <p class="font-bold text-sm text-gray-800">${schedule.name}</p>
-                                    <span class="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full font-medium">${countdownText}</span>
-                                </div>
-                                <p class="text-xs text-gray-500 truncate max-w-[200px] sm:max-w-[260px]">Relasi: ${schedule.relation}</p>
-                            </div>
-                        </div>
-                        <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
-                    </div>
-                `;
+                const totalMinsLeft=Math.floor(schedule._diff), hoursLeft=Math.floor(totalMinsLeft/60), minsLeft=totalMinsLeft%60;
+                const countdownText=hoursLeft>0?`${hoursLeft} jam ${minsLeft} mnt lagi`:minsLeft>0?`${minsLeft} menit lagi`:'Segera berangkat';
+                const time=schedule.departureTime || schedule.jam_ber || schedule.time || '--:--';
+                container.innerHTML += `<div class="flex items-center justify-between border-b pb-2.5 last:border-0 last:pb-0"><div class="flex items-center gap-3"><div class="bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1 text-kai-blue font-bold text-sm min-w-[60px] text-center shadow-sm">${time}</div><div><div class="flex items-center gap-2"><p class="font-bold text-sm text-gray-800">${schedule.name}</p><span class="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full font-medium">${countdownText}</span></div><p class="text-xs text-gray-500 truncate max-w-[200px] sm:max-w-[260px]">Relasi: ${formatRelation(schedule.relation)}</p></div></div><i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i></div>`;
             });
         }
 
         function timeToMinutes(timeStr) {
             if (!timeStr || !timeStr.includes(':')) return 0;
-            const parts = timeStr.split(':');
+            const parts=timeStr.split(':');
             return parseInt(parts[0]) * 60 + parseInt(parts[1]);
         }
 
         function renderJadwal() {
-            const tbody = document.getElementById('tbody-jadwal');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-            let filtered = appData.schedules.filter(s => s.type === currentJadwalTab);
-            if (searchQuery) filtered = filtered.filter(s => (s.name||'').toLowerCase().includes(searchQuery) || (s.relation||'').toLowerCase().includes(searchQuery));
-            filtered.sort((a,b)=>{const ta=a.time==='Ls'?'99:99':(a.time||'99:99'); const tb=b.time==='Ls'?'99:99':(b.time||'99:99'); return ta.localeCompare(tb);});
-            if (!filtered.length) { tbody.innerHTML='<tr><td colspan="3" class="text-center py-4 text-gray-500">Jadwal tidak ditemukan</td></tr>'; return; }
-            filtered.forEach(s=>{ const tr=document.createElement('tr'); const classText=s.classLabel?`<div class="text-[10px] text-gray-400 mt-0.5">${s.classLabel}</div>`:''; tr.innerHTML=`<td class="font-medium text-gray-800">${s.name||'-'}</td><td class="text-gray-600 text-xs sm:text-sm">${s.relation||'-'}</td><td class="text-right font-bold text-kai-blue">${s.time||'-'}${classText}</td>`; tbody.appendChild(tr); });
+            const tbody=document.getElementById('tbody-jadwal');
+            if(!tbody) return;
+            tbody.innerHTML='';
+            const tab = currentJadwalTab === 'berangkat' ? 'berangkat' : 'datang';
+            let filtered=(appData.schedules || []).map(normalizeSchedule).filter(s=>getScheduleTime(s,tab));
+            if(searchQuery){
+                filtered=filtered.filter(s=>String(s.name||'').toLowerCase().includes(searchQuery)||formatRelation(s.relation).toLowerCase().includes(searchQuery)||String(s.relation||'').toLowerCase().includes(searchQuery));
+            }
+            filtered.sort((a,b)=>timeToMinutes(getScheduleTime(a,tab)||'23:59')-timeToMinutes(getScheduleTime(b,tab)||'23:59'));
+            if(!filtered.length){tbody.innerHTML='<tr><td colspan="3" class="text-center py-4 text-gray-500">Jadwal tidak ditemukan</td></tr>';return;}
+            filtered.forEach(s=>{
+                const tr=document.createElement('tr');
+                const t=getScheduleTime(s,tab);
+                const cls=classLabel(s.classCode || s.kelas_ka);
+                const classText=cls ? ` <span class="text-[10px] text-gray-400">• ${cls}</span>` : '';
+                tr.innerHTML=`<td class="font-medium text-gray-800">${s.name}${classText}</td><td class="text-gray-600 text-xs sm:text-sm">${formatRelation(s.relation)}</td><td class="text-right font-bold text-kai-blue">${t}</td>`;
+                tbody.appendChild(tr);
+            });
         }
 
         function renderFasilitas() {
