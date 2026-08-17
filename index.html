@@ -1971,10 +1971,81 @@
         window.onload = initApp;
     </script>
 
-<div id="update-badge">Update v3<small>Stasiun Gombong Web App</small></div>
+<!-- Fallback UI handlers: keep navigation/buttons working even if the Firebase module is delayed or blocked. -->
+<script>
+(function () {
+  function activatePage(pageId) {
+    document.querySelectorAll('.page-content').forEach(function (el) { el.classList.remove('active'); });
+    var page = document.getElementById('page-' + pageId);
+    if (page) page.classList.add('active');
+
+    document.querySelectorAll('.nav-item').forEach(function (el) { el.classList.remove('active'); });
+    var nav = document.getElementById('nav-' + pageId);
+    if (nav) nav.classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  if (typeof window.switchPage !== 'function') {
+    window.switchPage = function (pageId) {
+      if (pageId === 'admin') { window.location.href = 'admin-login.html'; return; }
+      activatePage(pageId);
+    };
+  }
+
+  if (typeof window.switchTab !== 'function') {
+    window.switchTab = function (type) {
+      var b = document.getElementById('btn-tab-berangkat');
+      var d = document.getElementById('btn-tab-datang');
+      if (!b || !d) return;
+      var active = 'flex-1 py-2 text-sm font-medium rounded-md bg-white text-kai-blue shadow-sm';
+      var inactive = 'flex-1 py-2 text-sm font-medium rounded-md text-gray-600';
+      if (type === 'datang') { d.className = active; b.className = inactive; }
+      else { b.className = active; d.className = inactive; }
+    };
+  }
+
+  if (typeof window.promptInstallApp !== 'function') {
+    window.promptInstallApp = function () {
+      if (window.deferredPrompt) {
+        window.deferredPrompt.prompt();
+      } else {
+        alert("Untuk menginstall aplikasi, buka menu browser lalu pilih 'Tambahkan ke Layar Utama'.");
+      }
+    };
+  }
+
+  if (typeof window.downloadMock !== 'function') {
+    window.downloadMock = function (filename) {
+      var toast = document.getElementById('toast');
+      if (toast) {
+        toast.textContent = 'Mengunduh dokumen: ' + filename + '...';
+        toast.className = 'show';
+        setTimeout(function () { toast.className = ''; }, 2000);
+      }
+    };
+  }
+
+  if (typeof window.copyToClipboard !== 'function') {
+    window.copyToClipboard = function (text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () {
+          var toast = document.getElementById('toast');
+          if (toast) { toast.textContent = 'Disalin ke papan klip!'; toast.className = 'show'; setTimeout(function(){ toast.className=''; }, 2000); }
+        }).catch(function(){ alert(text); });
+      } else { alert(text); }
+    };
+  }
+
+  if (typeof window.handleLogin !== 'function') {
+    window.handleLogin = function (e) { if (e) e.preventDefault(); window.location.href = 'admin-login.html'; };
+  }
+})();
+</script>
+
+<div id="update-badge">Update v4<small>Stasiun Gombong Web App</small></div>
 <script>
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
+  window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js?v=4').catch(()=>{}));
 }
 </script>
 </body>
