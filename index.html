@@ -1314,7 +1314,7 @@
             );
 
             const applyFirestoreData = (docSnap) => {
-                if (!docSnap.exists()) {
+                if (!docSnap.exists) {
                     console.warn('Dokumen jadwal Firestore tidak ditemukan:', appId);
                     diag('Dokumen station_data/global TIDAK ditemukan', false);
                     renderHomeSchedules();
@@ -2122,7 +2122,7 @@
 })();
 </script>
 
-<div id="update-badge">Update v14<small>Stasiun Gombong Web App</small></div>
+<div id="update-badge">Update v15<small>Stasiun Gombong Web App</small></div>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js?v=14').catch(()=>{}));
