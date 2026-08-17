@@ -1167,7 +1167,7 @@
                     const base = {
                         baseId: raw.id ?? `firestore-${index + 1}`,
                         name: raw.nama_ka || raw.name || '-',
-                        trainNumber: raw.nomor_ka || raw.trainNumber || raw.no_ka || raw.ka || raw.ka_hulu || raw.ka_hilir || '-',
+                        trainNumber: raw.nomor_ka || raw.nomor_ka_hulu || raw.nomor_ka_hilir || raw.trainNumber || raw.no_ka || raw.ka || raw.ka_hulu || raw.ka_hilir || '-',
                         relation: formatRelation(raw.relasi || raw.relation || ''),
                         className: formatClass(raw.kelas_ka || raw.kelas || raw.className || ''),
                         jalur: raw.jalur ?? raw.track ?? '-'
@@ -1243,7 +1243,8 @@
             if (storedSchedules) {
                 try {
                     const parsed = JSON.parse(storedSchedules);
-                    appData.schedules = makeDisplaySchedules(parsed);
+                    const converted = makeDisplaySchedules(parsed);
+                    appData.schedules = converted.length > 0 ? converted : [...defaultSchedules];
                 } catch (err) {
                     appData.schedules = [...defaultSchedules];
                 }
@@ -1265,7 +1266,10 @@
         }
 
         function setupFirestoreSync() {
-            if (!db) return;
+            if (!db) {
+                console.warn('Firestore belum siap.');
+                return;
+            }
 
             const docRef = doc(
                 db,
@@ -1277,49 +1281,51 @@
                 'global'
             );
 
-            onSnapshot(docRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
+            const applyFirestoreData = (docSnap) => {
+                if (!docSnap.exists()) {
+                    console.warn('Dokumen jadwal Firestore tidak ditemukan:', appId);
+                    renderHomeSchedules();
+                    renderJadwal();
+                    return;
+                }
 
-                    if (Array.isArray(data.schedules)) {
-                        const converted = makeDisplaySchedules(data.schedules);
+                const data = docSnap.data() || {};
+                console.log('Firestore jadwal diterima:', data);
 
-                        // Only replace the visible schedules when Firestore
-                        // actually returned usable schedule records.
-                        if (converted.length > 0) {
-                            appData.schedules = converted;
-                            sortSchedules();
-                        }
+                if (Array.isArray(data.schedules)) {
+                    const converted = makeDisplaySchedules(data.schedules);
+                    console.log('Jumlah jadwal Firestore:', data.schedules.length, '→ tampilan:', converted.length);
+
+                    if (converted.length > 0) {
+                        appData.schedules = converted;
+                        sortSchedules();
+                        localStorage.setItem('gombong_schedules', JSON.stringify(converted));
                     }
+                }
 
-                    if (Array.isArray(data.facilities)) {
-                        appData.facilities = data.facilities;
-                    }
-
-                    // Keep a local cache of the already-converted display data.
-                    localStorage.setItem(
-                        'gombong_schedules',
-                        JSON.stringify(appData.schedules)
-                    );
-                    localStorage.setItem(
-                        'gombong_facilities',
-                        JSON.stringify(appData.facilities)
-                    );
+                if (Array.isArray(data.facilities)) {
+                    appData.facilities = data.facilities;
+                    localStorage.setItem('gombong_facilities', JSON.stringify(appData.facilities));
                 }
 
                 renderHomeSchedules();
                 renderJadwal();
                 renderFasilitas();
                 renderAdminData();
-            }, (error) => {
-                console.error('Firestore sync error:', error);
+            };
 
-                // IMPORTANT: do not clear schedules when Firebase fails.
-                // The previously loaded/default data remains visible.
+            // Baca sekali segera setelah halaman dibuka, lalu lanjutkan realtime.
+            getDoc(docRef).then(applyFirestoreData).catch(error => {
+                console.error('Firestore getDoc error:', error);
+                // Jangan mengosongkan jadwal; data default/cache tetap ditampilkan.
                 renderHomeSchedules();
                 renderJadwal();
-                renderFasilitas();
-                renderAdminData();
+            });
+
+            onSnapshot(docRef, applyFirestoreData, (error) => {
+                console.error('Firestore onSnapshot error:', error);
+                renderHomeSchedules();
+                renderJadwal();
             });
         }
 
