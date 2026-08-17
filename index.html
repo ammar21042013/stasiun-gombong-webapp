@@ -1086,29 +1086,6 @@
             clockTimer = setInterval(updateClock, 1000);
         }
 
-        const STATION_NAMES = {
-            ML: 'Malang',
-            BD: 'Bandung',
-            SLO: 'Solo Balapan',
-            GMR: 'Gambir',
-            PSE: 'Pasarsenen',
-            KTA: 'Kutoarjo',
-            PWT: 'Purwokerto',
-            SGU: 'Surabaya Gubeng',
-            YK: 'Yogyakarta',
-            KAC: 'Kiaracondong',
-            BL: 'Blitar',
-            LPN: 'Lempuyangan',
-            CP: 'Cilacap',
-            SMT: 'Semarang Tawang',
-            CN: 'Cirebon',
-            JG: 'Jombang',
-            MN: 'Madiun',
-            TG: 'Tegal',
-            JR: 'Jember',
-            KTG: 'Ketapang'
-        };
-
         function escapeHtml(value) {
             return String(value ?? '')
                 .replace(/&/g, '&amp;')
@@ -1118,108 +1095,96 @@
                 .replace(/'/g, '&#039;');
         }
 
-        function formatStationCode(code) {
-            const clean = String(code || '').trim();
-            if (!clean) return '';
-            const name = STATION_NAMES[clean];
-            return name ? `${name} (${clean})` : clean;
-        }
-
-        function formatRelation(relation) {
-            if (!relation) return '-';
-
-            // Preserve an already-complete relation.
-            if (/[()]/.test(relation)) return relation;
-
-            return String(relation)
-                .split(/\s*-\s*/)
-                .map(part => {
-                    const codes = part.trim().split(/\s*\/\s*/);
-                    if (codes.length > 1) {
-                        return codes.map(formatStationCode).join(' / ');
-                    }
-                    return formatStationCode(part.trim());
-                })
-                .join(' - ');
-        }
-
         function formatClass(value) {
             const raw = String(value || '').trim().toUpperCase();
             if (raw === 'EKO') return 'Ekonomi';
             if (raw === 'EKS') return 'Eksekutif';
             if (raw === 'EKS+EKO' || raw === 'EKO+EKS') return 'Eksekutif dan Ekonomi';
-            if (raw === 'EKS+BIS' || raw === 'BIS+EKS') return 'Eksekutif dan Bisnis';
             return value || '-';
         }
 
-        function normalizeSchedule(raw, index) {
-            const number = raw.nomor_ka ||
-                raw.trainNumber ||
-                [raw.nomor_ka_hulu, raw.nomor_ka_hilir].filter(Boolean).join(' / ') ||
-                raw.id ||
-                '-';
-
-            const arrival = raw.jam_dat ?? raw.arrival ?? '';
-            const departure = raw.jam_ber ?? raw.departure ?? raw.time ?? '';
-
-            // The CSV/Firestore format stores one record with both DAT and BER.
-            // We create two display records so the main site can keep its two tabs.
-            const base = {
-                id: raw.id ?? `schedule-${index + 1}`,
-                name: raw.nama_ka || raw.trainName || raw.name || '-',
-                trainNumber: String(number),
-                relation: formatRelation(raw.relasi || raw.relation || ''),
-                className: formatClass(raw.kelas_ka || raw.kelas || ''),
-                jalur: raw.jalur ?? raw.track ?? '-',
-                directArrival: String(arrival).trim().toLowerCase() === 'ls',
-                directDeparture: String(departure).trim().toLowerCase() === 'ls'
-            };
-
-            return {
-                arrivalRecord: arrival ? {
-                    ...base,
-                    id: `${base.id}-arrival`,
-                    type: 'datang',
-                    time: String(arrival).trim()
-                } : null,
-                departureRecord: departure ? {
-                    ...base,
-                    id: `${base.id}-departure`,
-                    type: 'berangkat',
-                    time: String(departure).trim()
-                } : null
-            };
+        function formatRelation(value) {
+            const relation = String(value || '').trim();
+            if (!relation) return '-';
+            // Import data is expected to already contain the complete relation,
+            // e.g. "Kutoarjo (KTA) - Pasarsenen (PSE)".
+            return relation;
         }
 
-        function normalizeSchedules(rawSchedules) {
+        function isDirect(value) {
+            return String(value || '').trim().toLowerCase() === 'ls';
+        }
+
+        function makeDisplaySchedules(rawSchedules) {
             const result = [];
 
             (Array.isArray(rawSchedules) ? rawSchedules : []).forEach((raw, index) => {
-                // Already in the old display format: preserve compatibility.
-                if (
-                    raw.type &&
-                    (raw.time || raw.jam_dat || raw.jam_ber) &&
-                    !raw.kelas_ka &&
-                    !raw.nama_ka
-                ) {
-                    const item = {
-                        id: raw.id ?? `schedule-${index + 1}`,
-                        type: raw.type,
-                        name: raw.name || raw.trainName || '-',
-                        trainNumber: String(raw.trainNumber || '-'),
-                        relation: formatRelation(raw.relation || ''),
-                        className: formatClass(raw.kelas || raw.className || ''),
-                        jalur: raw.jalur ?? raw.track ?? '-',
-                        time: raw.time || raw.jam_dat || raw.jam_ber || '-',
-                        direct: String(raw.status || '').toLowerCase() === 'ls'
+                // New Firestore import format: one document/record contains DAT + BER.
+                const isImported =
+                    raw &&
+                    (raw.jam_dat !== undefined ||
+                     raw.jam_ber !== undefined ||
+                     raw.nama_ka !== undefined ||
+                     raw.nomor_ka !== undefined);
+
+                if (isImported) {
+                    const base = {
+                        baseId: raw.id ?? `firestore-${index + 1}`,
+                        name: raw.nama_ka || raw.name || '-',
+                        trainNumber: raw.nomor_ka || raw.trainNumber || '-',
+                        relation: formatRelation(raw.relasi || raw.relation || ''),
+                        className: formatClass(raw.kelas_ka || raw.kelas || raw.className || ''),
+                        jalur: raw.jalur ?? raw.track ?? '-'
                     };
-                    result.push(item);
+
+                    const dat = String(raw.jam_dat ?? raw.arrival ?? '').trim();
+                    const ber = String(raw.jam_ber ?? raw.departure ?? '').trim();
+
+                    if (dat) {
+                        result.push({
+                            id: `${base.baseId}-datang`,
+                            type: 'datang',
+                            name: base.name,
+                            trainNumber: base.trainNumber,
+                            relation: base.relation,
+                            className: base.className,
+                            jalur: base.jalur,
+                            time: isDirect(dat) ? '' : dat,
+                            direct: isDirect(dat)
+                        });
+                    }
+
+                    if (ber) {
+                        result.push({
+                            id: `${base.baseId}-berangkat`,
+                            type: 'berangkat',
+                            name: base.name,
+                            trainNumber: base.trainNumber,
+                            relation: base.relation,
+                            className: base.className,
+                            jalur: base.jalur,
+                            time: isDirect(ber) ? '' : ber,
+                            direct: isDirect(ber)
+                        });
+                    }
+
                     return;
                 }
 
-                const normalized = normalizeSchedule(raw, index);
-                if (normalized.arrivalRecord) result.push(normalized.arrivalRecord);
-                if (normalized.departureRecord) result.push(normalized.departureRecord);
+                // Backward compatibility for any old display records.
+                if (raw && raw.type && raw.time !== undefined) {
+                    result.push({
+                        id: raw.id ?? `legacy-${index + 1}`,
+                        type: raw.type,
+                        name: raw.name || '-',
+                        trainNumber: raw.trainNumber || '-',
+                        relation: formatRelation(raw.relation || ''),
+                        className: formatClass(raw.className || raw.kelas || ''),
+                        jalur: raw.jalur ?? raw.track ?? '-',
+                        time: raw.time || '',
+                        direct: !!raw.direct || isDirect(raw.status)
+                    });
+                }
             });
 
             return result;
@@ -1227,18 +1192,28 @@
 
         function sortSchedules() {
             appData.schedules.sort((a, b) => {
-                const aTime = String(a.time || '99:99');
-                const bTime = String(b.time || '99:99');
+                const aTime = a.time || '99:99';
+                const bTime = b.time || '99:99';
                 return aTime.localeCompare(bTime);
             });
         }
 
         function loadLocalStorage() {
+            // Keep the existing working fallback so the website never becomes
+            // completely blank if Firebase is temporarily unavailable.
+            const storedSchedules = localStorage.getItem('gombong_schedules');
             const storedFacilities = localStorage.getItem('gombong_facilities');
 
-            // Jadwal utama sekarang berasal dari Firestore. Jangan gunakan
-            // jadwal lama/localStorage sebagai sumber jadwal utama.
-            appData.schedules = [];
+            if (storedSchedules) {
+                try {
+                    const parsed = JSON.parse(storedSchedules);
+                    appData.schedules = makeDisplaySchedules(parsed);
+                } catch (err) {
+                    appData.schedules = [...defaultSchedules];
+                }
+            } else {
+                appData.schedules = [...defaultSchedules];
+            }
 
             if (storedFacilities) {
                 try {
@@ -1249,10 +1224,12 @@
             } else {
                 appData.facilities = [...defaultFacilities];
             }
+
+            sortSchedules();
         }
 
         function setupFirestoreSync() {
-            if (!db || !auth.currentUser) return;
+            if (!db || !auth || !auth.currentUser) return;
 
             const docRef = doc(
                 db,
@@ -1265,27 +1242,33 @@
             );
 
             onSnapshot(docRef, (docSnap) => {
-                if (!docSnap.exists()) {
-                    console.warn('station_data/global belum tersedia.');
-                    appData.schedules = [];
-                    renderHomeSchedules();
-                    renderJadwal();
-                    renderFasilitas();
-                    renderAdminData();
-                    return;
-                }
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
 
-                const data = docSnap.data();
+                    if (Array.isArray(data.schedules)) {
+                        const converted = makeDisplaySchedules(data.schedules);
 
-                if (Array.isArray(data.schedules)) {
-                    appData.schedules = normalizeSchedules(data.schedules);
-                    sortSchedules();
-                } else {
-                    appData.schedules = [];
-                }
+                        // Only replace the visible schedules when Firestore
+                        // actually returned usable schedule records.
+                        if (converted.length > 0) {
+                            appData.schedules = converted;
+                            sortSchedules();
+                        }
+                    }
 
-                if (Array.isArray(data.facilities)) {
-                    appData.facilities = data.facilities;
+                    if (Array.isArray(data.facilities)) {
+                        appData.facilities = data.facilities;
+                    }
+
+                    // Keep a local cache of the already-converted display data.
+                    localStorage.setItem(
+                        'gombong_schedules',
+                        JSON.stringify(appData.schedules)
+                    );
+                    localStorage.setItem(
+                        'gombong_facilities',
+                        JSON.stringify(appData.facilities)
+                    );
                 }
 
                 renderHomeSchedules();
@@ -1293,44 +1276,59 @@
                 renderFasilitas();
                 renderAdminData();
             }, (error) => {
-                console.error('Sync error:', error);
+                console.error('Firestore sync error:', error);
 
-                // Jangan kembali ke jadwal default lama.
-                appData.schedules = [];
+                // IMPORTANT: do not clear schedules when Firebase fails.
+                // The previously loaded/default data remains visible.
                 renderHomeSchedules();
                 renderJadwal();
+                renderFasilitas();
+                renderAdminData();
             });
         }
 
         async function saveDataToCloud() {
-            if (!(auth && auth.currentUser && db)) return;
+            if (auth && auth.currentUser && db) {
+                try {
+                    const docRef = doc(
+                        db,
+                        'artifacts',
+                        appId,
+                        'public',
+                        'data',
+                        'station_data',
+                        'global'
+                    );
 
-            try {
-                const docRef = doc(
-                    db,
-                    'artifacts',
-                    appId,
-                    'public',
-                    'data',
-                    'station_data',
-                    'global'
+                    await setDoc(docRef, {
+                        schedules: appData.schedules,
+                        facilities: appData.facilities
+                    });
+                } catch (e) {
+                    console.error('Cloud save failed, saving local', e);
+                    localStorage.setItem(
+                        'gombong_schedules',
+                        JSON.stringify(appData.schedules)
+                    );
+                    localStorage.setItem(
+                        'gombong_facilities',
+                        JSON.stringify(appData.facilities)
+                    );
+                }
+            } else {
+                localStorage.setItem(
+                    'gombong_schedules',
+                    JSON.stringify(appData.schedules)
                 );
-
-                const current = await getDoc(docRef);
-                const currentData = current.exists() ? current.data() : {};
-
-                await setDoc(docRef, {
-                    schedules: Array.isArray(currentData.schedules)
-                        ? currentData.schedules
-                        : [],
-                    facilities: appData.facilities
-                }, { merge: true });
-            } catch (e) {
-                console.error("Cloud save failed:", e);
+                localStorage.setItem(
+                    'gombong_facilities',
+                    JSON.stringify(appData.facilities)
+                );
             }
         }
 
         // Admin sekarang menggunakan halaman autentikasi Firebase terpisah.
+        // Website utama tidak lagi memproses username/password admin lama.
         window.openAdminPortal = function() {
             window.location.href = "admin-login.html";
         }
@@ -1352,13 +1350,15 @@
         }
 
         window.resetData = function() {
-            if (confirm("Reset data jadwal akan menghapus jadwal Firestore dan tidak menggunakan jadwal lama. Lanjutkan?")) {
-                appData.schedules = [];
+            if (confirm("Apakah Anda yakin ingin mereset semua data ke pengaturan awal?")) {
+                appData.schedules = [...defaultSchedules];
+                appData.facilities = [...defaultFacilities];
                 saveDataToCloud();
                 renderHomeSchedules();
                 renderJadwal();
+                renderFasilitas();
                 renderAdminData();
-                showToast("Jadwal direset. Silakan import data melalui Dashboard Admin.");
+                showToast("Data berhasil dikembalikan ke semula!");
             }
         }
 
@@ -1368,21 +1368,19 @@
 
             container.innerHTML = '';
 
-            const departures = appData.schedules.filter(
-                s => s && s.type === 'berangkat'
-            );
-
-            if (!departures.length) {
+            if (!appData.schedules || appData.schedules.length === 0) {
                 container.innerHTML =
-                    '<p class="text-sm text-gray-500 italic text-center py-2">Tidak ada jadwal keberangkatan.</p>';
+                    '<p class="text-sm text-gray-500 italic text-center py-2">Tidak ada jadwal tersimpan.</p>';
                 return;
             }
 
             const now = new Date();
             const currentTotalMinutes =
-                now.getHours() * 60 +
-                now.getMinutes() +
-                now.getSeconds() / 60;
+                now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+
+            const departures = appData.schedules.filter(
+                s => s && s.type === 'berangkat' && s.time
+            );
 
             departures.forEach(s => {
                 const scheduleMinutes = timeToMinutes(s.time);
@@ -1393,7 +1391,15 @@
 
             departures.sort((a, b) => a._diff - b._diff);
 
-            departures.slice(0, 3).forEach(schedule => {
+            const nearestDepartures = departures.slice(0, 3);
+
+            if (nearestDepartures.length === 0) {
+                container.innerHTML =
+                    '<p class="text-sm text-gray-500 italic text-center py-2">Tidak ada keberangkatan terdekat.</p>';
+                return;
+            }
+
+            nearestDepartures.forEach(schedule => {
                 const totalMinsLeft = Math.floor(schedule._diff);
                 const hoursLeft = Math.floor(totalMinsLeft / 60);
                 const minsLeft = totalMinsLeft % 60;
@@ -1470,23 +1476,13 @@
                     ? '<div class="text-[9px] text-kai-orange font-bold uppercase tracking-wide mb-0.5">Langsung</div>'
                     : '';
 
-                const timeLabel = `
-                    ${directLabel}
-                    <div class="font-bold text-kai-blue">${escapeHtml(s.time)}</div>
-                `;
-
-                const typeLabel =
-                    currentJadwalTab === 'berangkat'
-                        ? 'Keberangkatan'
-                        : 'Kedatangan';
-
                 const tr = document.createElement('tr');
 
                 tr.innerHTML = `
                     <td class="align-top">
                         <div class="font-bold text-gray-800">${escapeHtml(s.name)}</div>
                         <div class="text-[10px] text-gray-500 mt-0.5">
-                            KA ${escapeHtml(s.trainNumber)}
+                            KA ${escapeHtml(s.trainNumber || '-')}
                         </div>
                     </td>
                     <td class="align-top">
@@ -1501,8 +1497,8 @@
                         ${escapeHtml(s.jalur || '-')}
                     </td>
                     <td class="align-top text-right">
-                        ${timeLabel}
-                        <div class="text-[9px] text-gray-400 mt-0.5">${typeLabel}</div>
+                        ${directLabel}
+                        <div class="font-bold text-kai-blue">${escapeHtml(s.time || '-')}</div>
                     </td>
                 `;
 
@@ -1512,15 +1508,17 @@
 
         function renderFasilitas() {
             const container = document.getElementById('fasilitas-container');
+            if (!container) return;
+
             container.innerHTML = '';
-            
+
             appData.facilities.forEach(f => {
                 container.innerHTML += `
                     <div class="card flex flex-col items-center justify-center text-center !p-4 !mb-0 h-full">
                         <div class="w-12 h-12 bg-gray-50 text-kai-orange rounded-full flex items-center justify-center text-xl mb-2">
-                            <i class="${f.icon}"></i>
+                            <i class="${escapeHtml(f.icon)}"></i>
                         </div>
-                        <span class="text-xs font-semibold text-gray-700">${f.name}</span>
+                        <span class="text-xs font-semibold text-gray-700">${escapeHtml(f.name)}</span>
                     </div>
                 `;
             });
@@ -1544,11 +1542,16 @@
                                 ${s.type === 'berangkat' ? 'B' : 'D'}
                             </span>
                             ${escapeHtml(s.name)}
-                            <div class="text-[10px] text-gray-500">KA ${escapeHtml(s.trainNumber || '-')}</div>
+                            <div class="text-[10px] text-gray-500">
+                                KA ${escapeHtml(s.trainNumber || '-')}
+                            </div>
                         </td>
                         <td class="text-xs truncate max-w-[120px]">${escapeHtml(s.relation)}</td>
-                        <td class="text-xs">${escapeHtml(s.className || '-')}<br>Jalur ${escapeHtml(s.jalur || '-')}</td>
-                        <td class="text-xs font-mono">${direct}${escapeHtml(s.time)}</td>
+                        <td class="text-xs">
+                            ${escapeHtml(s.className || '-')}<br>
+                            Jalur ${escapeHtml(s.jalur || '-')}
+                        </td>
+                        <td class="text-xs font-mono">${direct}${escapeHtml(s.time || '-')}</td>
                         <td class="text-right">
                             <button onclick="deleteSchedule('${String(s.id).replace(/'/g, "\\'")}')" class="text-red-500 hover:bg-red-50 p-1 rounded">
                                 <i class="fa-solid fa-trash"></i>
@@ -1581,12 +1584,18 @@
         function handleAddJadwal(e) {
             e.preventDefault();
 
-            const name = document.getElementById('add-ka-nama').value.trim();
+            const name = document.getElementById('add-ka-nama').value;
             const type = document.getElementById('add-ka-jenis').value;
-            const relation = document.getElementById('add-ka-relasi').value.trim();
+            const relation = document.getElementById('add-ka-relasi').value;
             const time = document.getElementById('add-ka-jam').value;
 
-            const newId = `manual-${Date.now()}`;
+            const numericIds = appData.schedules
+                .map(s => Number(s.id))
+                .filter(Number.isFinite);
+
+            const newId = numericIds.length
+                ? Math.max(...numericIds) + 1
+                : Date.now();
 
             appData.schedules.push({
                 id: newId,
@@ -1612,6 +1621,255 @@
 
         function handleAddFasilitas(e) {
             e.preventDefault();
+
+            const name = document.getElementById('add-fas-nama').value;
+            const icon = document.getElementById('add-fas-icon').value;
+
+            const newId = appData.facilities.length > 0
+                ? Math.max(...appData.facilities.map(f => f.id)) + 1
+                : 1;
+
+            appData.facilities.push({ id: newId, name, icon });
+
+            saveDataToCloud();
+            document.getElementById('form-add-fasilitas').reset();
+            renderAdminData();
+            renderFasilitas();
+            showToast("Fasilitas berhasil ditambahkan & disinkronkan!");
+        }
+
+        window.deleteSchedule = function(id) {
+            if (confirm("Hapus jadwal ini?")) {
+                appData.schedules = appData.schedules.filter(
+                    s => String(s.id) !== String(id)
+                );
+
+                saveDataToCloud();
+                renderAdminData();
+                renderJadwal();
+                renderHomeSchedules();
+                showToast("Jadwal berhasil dihapus.");
+            }
+        }
+
+        window.deleteFacility = function(id) {
+            if (confirm("Hapus fasilitas ini?")) {
+                appData.facilities = appData.facilities.filter(f => f.id !== id);
+                saveDataToCloud();
+                renderAdminData();
+                renderFasilitas();
+                showToast("Fasilitas berhasil dihapus.");
+            }
+        }
+
+        // Admin sekarang menggunakan halaman autentikasi Firebase terpisah.
+        // Website utama tidak lagi memproses username/password admin lama.
+        window.openAdminPortal = function() {
+            window.location.href = "admin-login.html";
+        }
+
+        window.closeAdminPortal = function() {
+            const modal = document.getElementById('login-modal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        // Dipertahankan agar referensi lama tidak menyebabkan error,
+        // tetapi login admin tidak lagi dilakukan di index.html.
+        window.handleLogin = function(e) {
+            e.preventDefault();
+            window.location.href = "admin-login.html";
+        }
+
+        window.handleLogout = function() {
+            isAdminLoggedIn = false;
+            switchPage('home');
+            showToast("Berhasil kembali ke website utama.");
+        }
+
+        window.resetData = function() {
+            if(confirm("Apakah Anda yakin ingin mereset semua data ke pengaturan awal?")) {
+                appData.schedules = [...defaultSchedules];
+                appData.facilities = [...defaultFacilities];
+                saveDataToCloud();
+                renderHomeSchedules();
+                renderJadwal();
+                renderFasilitas();
+                renderAdminData();
+                showToast("Data berhasil dikembalikan ke semula!");
+            }
+        }
+
+        function renderHomeSchedules() {
+            const container = document.getElementById('home-schedule-container');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            if (!appData.schedules || appData.schedules.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500 italic text-center py-2">Tidak ada jadwal tersimpan.</p>';
+                return;
+            }
+
+            const now = new Date();
+            const currentTotalMinutes = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+            
+            const departures = appData.schedules.filter(s => s && s.type === 'berangkat');
+            
+            departures.forEach(s => {
+                const scheduleMinutes = timeToMinutes(s.time || '00:00');
+                let diff = scheduleMinutes - currentTotalMinutes;
+                if (diff < 0) diff += 1440;
+                s._diff = diff;
+            });
+
+            departures.sort((a, b) => a._diff - b._diff);
+            
+            const nearestDepartures = departures.slice(0, 3);
+            if (nearestDepartures.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500 italic text-center py-2">Tidak ada keberangkatan terdekat.</p>';
+                return;
+            }
+
+            nearestDepartures.forEach(schedule => {
+                const totalMinsLeft = Math.floor(schedule._diff);
+                const hoursLeft = Math.floor(totalMinsLeft / 60);
+                const minsLeft = totalMinsLeft % 60;
+                let countdownText = '';
+                if (hoursLeft > 0) {
+                    countdownText = `${hoursLeft} jam ${minsLeft} mnt lagi`;
+                } else if (minsLeft > 0) {
+                    countdownText = `${minsLeft} menit lagi`;
+                } else {
+                    countdownText = `Segera berangkat`;
+                }
+
+                container.innerHTML += `
+                    <div class="flex items-center justify-between border-b pb-2.5 last:border-0 last:pb-0">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1 text-kai-blue font-bold text-sm min-w-[60px] text-center shadow-sm">
+                                ${schedule.time}
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <p class="font-bold text-sm text-gray-800">${schedule.name}</p>
+                                    <span class="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full font-medium">${countdownText}</span>
+                                </div>
+                                <p class="text-xs text-gray-500 truncate max-w-[200px] sm:max-w-[260px]">Relasi: ${schedule.relation}</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+                    </div>
+                `;
+            });
+        }
+
+        function timeToMinutes(timeStr) {
+            if (!timeStr || !timeStr.includes(':')) return 0;
+            const parts = timeStr.split(':');
+            return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+        }
+
+        function renderJadwal() {
+            const tbody = document.getElementById('tbody-jadwal');
+            tbody.innerHTML = '';
+            
+            let filtered = appData.schedules.filter(s => s.type === currentJadwalTab);
+            if (searchQuery) {
+                filtered = filtered.filter(s => 
+                    s.name.toLowerCase().includes(searchQuery) || 
+                    s.relation.toLowerCase().includes(searchQuery)
+                );
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-gray-500">Jadwal tidak ditemukan</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(s => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="font-medium text-gray-800">${s.name}</td>
+                    <td class="text-gray-600 text-xs sm:text-sm">${s.relation}</td>
+                    <td class="text-right font-bold text-kai-blue">${s.time}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderFasilitas() {
+            const container = document.getElementById('fasilitas-container');
+            container.innerHTML = '';
+            
+            appData.facilities.forEach(f => {
+                container.innerHTML += `
+                    <div class="card flex flex-col items-center justify-center text-center !p-4 !mb-0 h-full">
+                        <div class="w-12 h-12 bg-gray-50 text-kai-orange rounded-full flex items-center justify-center text-xl mb-2">
+                            <i class="${f.icon}"></i>
+                        </div>
+                        <span class="text-xs font-semibold text-gray-700">${f.name}</span>
+                    </div>
+                `;
+            });
+        }
+
+        function renderAdminData() {
+            const tbodyJadwal = document.getElementById('admin-tbody-jadwal');
+            tbodyJadwal.innerHTML = '';
+            
+            appData.schedules.forEach(s => {
+                tbodyJadwal.innerHTML += `
+                    <tr>
+                        <td class="text-xs">
+                            <span class="${s.type === 'berangkat' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'} px-1 rounded text-[10px] mr-1 uppercase">${s.type === 'berangkat' ? 'B' : 'D'}</span>
+                            ${s.name}
+                        </td>
+                        <td class="text-xs truncate max-w-[120px]">${s.relation}</td>
+                        <td class="text-xs font-mono">${s.time}</td>
+                        <td class="text-right">
+                            <button onclick="deleteSchedule(${s.id})" class="text-red-500 hover:bg-red-50 p-1 rounded"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            const listFasilitas = document.getElementById('admin-list-fasilitas');
+            listFasilitas.innerHTML = '';
+            
+            appData.facilities.forEach(f => {
+                listFasilitas.innerHTML += `
+                    <div class="flex items-center justify-between p-2 bg-white border rounded shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <i class="${f.icon} text-kai-blue w-6 text-center"></i>
+                            <span class="text-sm font-medium">${f.name}</span>
+                        </div>
+                        <button onclick="deleteFacility(${f.id})" class="text-red-500 hover:bg-red-50 p-1 rounded"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+            });
+        }
+
+        function handleAddJadwal(e) {
+            e.preventDefault();
+            const name = document.getElementById('add-ka-nama').value;
+            const type = document.getElementById('add-ka-jenis').value;
+            const relation = document.getElementById('add-ka-relasi').value;
+            const time = document.getElementById('add-ka-jam').value;
+            
+            const newId = appData.schedules.length > 0 ? Math.max(...appData.schedules.map(s => s.id)) + 1 : 1;
+            
+            appData.schedules.push({ id: newId, type, name, relation, time });
+            appData.schedules.sort((a, b) => a.time.localeCompare(b.time));
+            saveDataToCloud();
+            
+            document.getElementById('form-add-jadwal').reset();
+            renderAdminData();
+            renderJadwal();
+            renderHomeSchedules();
+            showToast("Jadwal berhasil ditambahkan & disinkronkan!");
+        }
+
+        function handleAddFasilitas(e) {
+            e.preventDefault();
             const name = document.getElementById('add-fas-nama').value;
             const icon = document.getElementById('add-fas-icon').value;
             
@@ -1626,64 +1884,14 @@
         }
 
         window.deleteSchedule = function(id) {
-            if (confirm("Hapus jadwal ini?")) {
-                appData.schedules = appData.schedules.filter(
-                    s => String(s.id) !== String(id)
-                );
-
-                // Persist in the same Firestore format used by the importer.
-                // Convert display records back to one record per train.
-                saveDisplaySchedulesToCloud();
-
+            if(confirm("Hapus jadwal ini?")) {
+                appData.schedules = appData.schedules.filter(s => s.id !== id);
+                saveDataToCloud();
                 renderAdminData();
                 renderJadwal();
                 renderHomeSchedules();
                 showToast("Jadwal berhasil dihapus.");
             }
-        }
-
-        async function saveDisplaySchedulesToCloud() {
-            if (!(auth && auth.currentUser && db)) return;
-
-            const grouped = {};
-            appData.schedules.forEach(s => {
-                const baseId = String(s.id || '').replace(/-(arrival|departure)$/, '');
-                if (!grouped[baseId]) {
-                    grouped[baseId] = {
-                        id: baseId,
-                        nomor_ka: s.trainNumber || '',
-                        nama_ka: s.name || '',
-                        relasi: s.relation || '',
-                        kelas_ka: s.className || '',
-                        jalur: s.jalur || '',
-                        jam_dat: '',
-                        jam_ber: ''
-                    };
-                }
-
-                if (s.type === 'datang') {
-                    grouped[baseId].jam_dat = s.time || '';
-                    if (s.direct) grouped[baseId].jam_dat = 'Ls';
-                } else {
-                    grouped[baseId].jam_ber = s.time || '';
-                    if (s.direct) grouped[baseId].jam_ber = 'Ls';
-                }
-            });
-
-            const docRef = doc(
-                db,
-                'artifacts',
-                appId,
-                'public',
-                'data',
-                'station_data',
-                'global'
-            );
-
-            await setDoc(docRef, {
-                schedules: Object.values(grouped),
-                facilities: appData.facilities
-            });
         }
 
         window.deleteFacility = function(id) {
