@@ -860,10 +860,24 @@
       <div id="firebase-status">Memeriksa...</div>
       <button onclick="document.getElementById('firebase-diagnostic').style.display='none'" style="margin-top:7px;border:0;border-radius:8px;padding:6px 10px;background:#e9edf2">Tutup</button>
     </div>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script>
+        // Firebase Compat: lebih aman untuk Chrome Android/tablet dan tidak bergantung pada ES Module import.
+        const initializeApp = (config) => firebase.initializeApp(config);
+        const getAuth = (app) => firebase.auth(app);
+        const getFirestore = (app) => firebase.firestore(app);
+        const signInAnonymously = (auth) => auth.signInAnonymously();
+        const signInWithCustomToken = (auth, token) => auth.signInWithCustomToken(token);
+        const doc = (db, ...path) => db.doc(path.join('/'));
+        const getDoc = (ref) => ref.get();
+        const setDoc = (ref, data, options) => ref.set(data, options);
+        const updateDoc = (ref, data) => ref.update(data);
+        const onSnapshot = (ref, next, error) => ref.onSnapshot(next, error);
+        const collection = (db, ...path) => db.collection(path.join('/'));
+        const query = (ref, ...constraints) => ref;
+        const getDocs = (ref) => ref.get();
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'stasiun-gombong-gb';
         const appFirebaseConfig = window.__GOMBONG_FIREBASE_CONFIG__ || ((typeof window.firebaseConfig !== 'undefined') ? window.firebaseConfig : (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null));
@@ -2108,10 +2122,10 @@
 })();
 </script>
 
-<div id="update-badge">Update v13<small>Stasiun Gombong Web App</small></div>
+<div id="update-badge">Update v14<small>Stasiun Gombong Web App</small></div>
 <script>
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js?v=13').catch(()=>{}));
+  window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js?v=14').catch(()=>{}));
 }
 </script>
 </body>
