@@ -200,10 +200,10 @@
         }
         #table-jadwal th:nth-child(1), #table-jadwal td:nth-child(1) { min-width: 90px; }
         #table-jadwal th:nth-child(2), #table-jadwal td:nth-child(2) { min-width: 145px; }
-        #table-jadwal th:nth-child(3), #table-jadwal td:nth-child(3) { min-width: 250px; }
-        #table-jadwal th:nth-child(4), #table-jadwal td:nth-child(4) { min-width: 150px; }
+        #table-jadwal th:nth-child(3), #table-jadwal td:nth-child(3) { min-width: 250px; text-align: center; }
+        #table-jadwal th:nth-child(4), #table-jadwal td:nth-child(4) { min-width: 150px; text-align: center; }
         #table-jadwal th:nth-child(5), #table-jadwal td:nth-child(5) { min-width: 70px; text-align: center; }
-        #table-jadwal th:nth-child(6), #table-jadwal td:nth-child(6) { min-width: 95px; }
+        #table-jadwal th:nth-child(6), #table-jadwal td:nth-child(6) { min-width: 95px; text-align: center; }
         .jadwal-scroll {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
@@ -502,8 +502,8 @@
                         <table id="table-jadwal">
                             <thead>
                                 <tr>
-                                    <th>No. KA</th>
-                                    <th>KA</th>
+                                    <th><span class="header-stack">Nomor<br>Kereta</span></th>
+                                    <th><span class="header-stack">Nama<br>Kereta</span></th>
                                     <th>Relasi Perjalanan</th>
                                     <th>Kelas</th>
                                     <th>Jalur</th>
@@ -1507,18 +1507,18 @@
                     <td class="align-top">
                         <div class="font-bold text-gray-800">${escapeHtml(s.name || '-')}</div>
                     </td>
-                    <td class="align-top">
+                    <td class="align-top text-center">
                         <div class="text-gray-600 text-xs sm:text-sm leading-relaxed">
                             ${escapeHtml(s.relation || '-')}
                         </div>
                     </td>
-                    <td class="align-top text-xs">
+                    <td class="align-top text-xs text-center">
                         ${escapeHtml(s.className || '-')}
                     </td>
                     <td class="align-top text-xs text-center">
                         ${escapeHtml(s.jalur || '-')}
                     </td>
-                    <td class="align-top text-right">
+                    <td class="align-top text-center">
                         ${directLabel}
                         <div class="font-bold text-kai-blue">${escapeHtml(s.time || '-')}</div>
                     </td>
@@ -2064,7 +2064,7 @@
 })();
 </script>
 
-<div id="update-badge">Update v4<small>Stasiun Gombong Web App</small></div>
+<div id="update-badge">Update v7<small>Stasiun Gombong Web App</small></div>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js?v=4').catch(()=>{}));
