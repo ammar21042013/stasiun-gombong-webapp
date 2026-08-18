@@ -1910,7 +1910,7 @@
                 <td class="align-top text-gray-600 text-xs min-w-[220px]">${esc(s.relation)}</td>
                 <td class="align-top text-gray-600 text-xs whitespace-nowrap">${esc(s.className)}</td>
                 <td class="align-top text-gray-600 text-xs text-center">${esc(s.jalur)}</td>
-                <td class="align-top text-center font-bold text-kai-blue whitespace-nowrap">${s.direct?'<div class="text-[9px] text-kai-orange font-bold uppercase tracking-wide mb-0.5">Langsung</div>':''}${s.direct?'':esc(s.time)}</td>
+                <td class="align-top text-center font-bold text-kai-blue whitespace-nowrap">${s.direct?'<div class="text-[9px] text-green-600 font-bold tracking-wide mb-0.5">Langsung</div>':''}${s.direct?'':esc(s.time)}</td>
             </tr>`).join('') : '<tr><td colspan="6" class="text-center py-6 text-gray-500">Jadwal tidak ditemukan</td></tr>';
         }
         const home=document.getElementById('home-schedule-container');
@@ -1920,7 +1920,28 @@
             deps.forEach(s=>{let t=Number(s.time.split(':')[0])*60+Number(s.time.split(':')[1]);let d=t-cur;if(d<0)d+=1440;s._d=d;});
             deps.sort((a,b)=>a._d-b._d);
             const nearest=deps.slice(0,3);
-            home.innerHTML=nearest.map(s=>`<div class="flex items-center justify-between border-b pb-2.5 last:border-0 last:pb-0"><div class="flex items-center gap-3"><div class="bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1 text-kai-blue min-w-[60px] text-center shadow-sm">${s.direct?'<div class="text-[9px] text-kai-orange font-bold uppercase">Langsung</div>':''}<div class="font-bold text-sm">${esc(s.time)}</div></div><div><p class="font-bold text-sm text-gray-800">${esc(s.name)}</p><p class="text-xs text-gray-500 truncate max-w-[220px]">Relasi: ${esc(s.relation)}</p></div></div><i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i></div>`).join('') || '<p class="text-sm text-gray-500 italic text-center py-2">Tidak ada keberangkatan terdekat.</p>';
+            home.innerHTML=nearest.map(s=>{
+                const mins=Math.floor(s._d);
+                const hours=Math.floor(mins/60);
+                const rem=mins%60;
+                const countdown = hours>0 ? `${hours} jam ${rem} mnt lagi` : (rem>0 ? `${rem} menit lagi` : 'Segera berangkat');
+                return `<div class="flex items-center justify-between border-b pb-2.5 last:border-0 last:pb-0 cursor-pointer" onclick="switchPage('jadwal')">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1 text-kai-blue min-w-[60px] text-center shadow-sm">
+                            ${s.direct?'<div class="text-[9px] text-green-600 font-bold tracking-wide">Langsung</div>':''}
+                            <div class="font-bold text-sm">${esc(s.time)}</div>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <p class="font-bold text-sm text-gray-800 truncate">${esc(s.name)}</p>
+                                <span class="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap">${esc(countdown)}</span>
+                            </div>
+                            <p class="text-xs text-gray-500 truncate max-w-[220px]">Relasi: ${esc(s.relation)}</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+                </div>`;
+            }).join('') || '<p class="text-sm text-gray-500 italic text-center py-2">Tidak ada keberangkatan terdekat.</p>';
         }
     }
     function renderFallbackFacilities() {
@@ -2515,7 +2536,7 @@
                     <td class="text-gray-600 text-xs sm:text-sm min-w-[220px]">${safe(s.relation)}</td>
                     <td class="text-gray-600 text-xs whitespace-nowrap">${safe(kelas)}</td>
                     <td class="text-gray-600 text-xs text-center">${safe(jalur)}</td>
-                    <td class="text-center font-bold text-kai-blue whitespace-nowrap">${s.direct ? '<div class="text-[9px] text-kai-orange font-bold uppercase tracking-wide mb-0.5">Langsung</div>' : ''}${s.direct ? '' : safe(s.time)}</td>
+                    <td class="text-center font-bold text-kai-blue whitespace-nowrap">${s.direct ? '<div class="text-[9px] text-green-600 font-bold tracking-wide mb-0.5">Langsung</div>' : ''}${s.direct ? '' : safe(s.time)}</td>
                 `;
                 tbody.appendChild(tr);
             });
