@@ -182,7 +182,6 @@
 
         table {
             width: 100%;
-            min-width: 760px;
             border-collapse: collapse;
         }
         th, td {
@@ -190,39 +189,11 @@
             text-align: left;
             border-bottom: 1px solid #e5e7eb;
             font-size: 0.875rem;
-            vertical-align: top;
-        }
-        .header-stack {
-            display: block;
-            width: 100%;
-            text-align: center !important;
-            line-height: 1.25;
-        }
-        #table-jadwal th, #table-jadwal td {
-            text-align: center !important;
-            vertical-align: middle;
         }
         th {
             background-color: #f9fafb;
             font-weight: 600;
             color: #374151;
-            white-space: nowrap;
-        }
-        #table-jadwal th:nth-child(1), #table-jadwal td:nth-child(1) { min-width: 90px; text-align: center; }
-        #table-jadwal th:nth-child(2), #table-jadwal td:nth-child(2) { min-width: 145px; text-align: center; }
-        #table-jadwal th:nth-child(3), #table-jadwal td:nth-child(3) { min-width: 250px; text-align: center; }
-        #table-jadwal th:nth-child(4), #table-jadwal td:nth-child(4) { min-width: 150px; text-align: center; }
-        #table-jadwal th:nth-child(5), #table-jadwal td:nth-child(5) { min-width: 70px; text-align: center; }
-        #table-jadwal th:nth-child(6), #table-jadwal td:nth-child(6) { min-width: 95px; text-align: center; }
-        .jadwal-scroll {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin;
-        }
-        .jadwal-scroll::-webkit-scrollbar { height: 7px; }
-        .jadwal-scroll::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 999px;
         }
 
         #toast {
@@ -508,12 +479,12 @@
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="jadwal-scroll">
+                    <div class="overflow-x-auto">
                         <table id="table-jadwal">
                             <thead>
                                 <tr>
-                                    <th><span class="header-stack">Nomor<br>Kereta</span></th>
-                                    <th><span class="header-stack">Nama<br>Kereta</span></th>
+                                    <th>Nomor Kereta</th>
+                                    <th>Nama Kereta</th>
                                     <th>Relasi Perjalanan</th>
                                     <th>Kelas</th>
                                     <th>Jalur</th>
@@ -526,8 +497,7 @@
                         </table>
                     </div>
                 </div>
-                <p class="text-[11px] text-center text-gray-400 mt-2">Geser tabel ke kiri/kanan untuk melihat semua kolom.</p>
-                <p class="text-xs text-center text-gray-400 mt-2">*Jadwal tersinkron dari database Stasiun Gombong. Jadwal dapat berubah sewaktu-waktu.</p>
+                <p class="text-xs text-center text-gray-400 mt-4">*Data dihimpun dari booking.kai.id. Jadwal dapat berubah sewaktu-waktu.</p>
             </div>
         </main>
 
@@ -848,135 +818,1208 @@
 
     </div>
 
-    <script src="firebase-config.js"></script>
+    <!-- Emergency schedule renderer: deliberately independent from Firebase/module loading. -->
+    <script>
+(function () {
+    // V14 emergency/fallback layer: tetap menampilkan jadwal, BMKG, dan fasilitas
+    // walaupun modul Firebase gagal dimuat di browser/Preview.
+    const RAW_SCHEDULES = [
+  {
+    "no": "1",
+    "nomor_ka_hulu": "67",
+    "nomor_ka_hilir": "",
+    "nama_ka": "MALABAR",
+    "relasi": "ML-BD",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "00:12",
+    "jam_ber": "00:14",
+    "jalur": "2"
+  },
+  {
+    "no": "2",
+    "nomor_ka_hulu": "80B",
+    "nomor_ka_hilir": "",
+    "nama_ka": "LODAYA",
+    "relasi": "BD-SLO",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "00:12",
+    "jam_ber": "00:14",
+    "jalur": "4"
+  },
+  {
+    "no": "3",
+    "nomor_ka_hulu": "108B",
+    "nomor_ka_hilir": "",
+    "nama_ka": "SENA UTAMA YK",
+    "relasi": "PSE-YK",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "00:24",
+    "jam_ber": "00:26",
+    "jalur": "4"
+  },
+  {
+    "no": "4",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "",
+    "nama_ka": "BIMA",
+    "relasi": "SLO-GMR",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "00:55",
+    "jalur": "2"
+  },
+  {
+    "no": "5",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "63B",
+    "nama_ka": "MANAHAN",
+    "relasi": "SLO-GMR",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "00:59",
+    "jalur": "2"
+  },
+  {
+    "no": "6",
+    "nomor_ka_hulu": "72",
+    "nomor_ka_hilir": "",
+    "nama_ka": "MUTIARA SELATAN",
+    "relasi": "BD-SGU",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "01:07",
+    "jam_ber": "01:09",
+    "jalur": "4"
+  },
+  {
+    "no": "7",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "11",
+    "nama_ka": "TURANGGA",
+    "relasi": "SGU-BD",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "01:13",
+    "jalur": "2"
+  },
+  {
+    "no": "8",
+    "nomor_ka_hulu": "116B",
+    "nomor_ka_hilir": "",
+    "nama_ka": "SAWUNGGALIH",
+    "relasi": "PSE-KTA",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "Ls",
+    "jam_ber": "01:23",
+    "jalur": "3"
+  },
+  {
+    "no": "9",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "281",
+    "nama_ka": "BENGAWAN",
+    "relasi": "PWS-PSE",
+    "kelas_ka": "EKO",
+    "jam_dat": "01:28",
+    "jam_ber": "01:30",
+    "jalur": "2"
+  },
+  {
+    "no": "10",
+    "nomor_ka_hulu": "14",
+    "nomor_ka_hilir": "",
+    "nama_ka": "ARGO LAWU",
+    "relasi": "GMR-SLO",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "01:35",
+    "jalur": "3"
+  },
+  {
+    "no": "11",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "273",
+    "nama_ka": "KAHURI PAN",
+    "relasi": "BL-KAC",
+    "kelas_ka": "EKO",
+    "jam_dat": "Ls",
+    "jam_ber": "01:44",
+    "jalur": "2"
+  },
+  {
+    "no": "12",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "255B",
+    "nama_ka": "JAKA TINGKIR",
+    "relasi": "SLO-PSE",
+    "kelas_ka": "EKO",
+    "jam_dat": "02:10",
+    "jam_ber": "02:12",
+    "jalur": "2"
+  },
+  {
+    "no": "13",
+    "nomor_ka_hulu": "48",
+    "nomor_ka_hilir": "",
+    "nama_ka": "TAKSAKA",
+    "relasi": "GMR-YK",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "02:19",
+    "jalur": "3"
+  },
+  {
+    "no": "14",
+    "nomor_ka_hulu": "144B",
+    "nomor_ka_hilir": "",
+    "nama_ka": "MADIUN JAYA",
+    "relasi": "PSE-MN",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "Ls",
+    "jam_ber": "02:37",
+    "jalur": "3"
+  },
+  {
+    "no": "15",
+    "nomor_ka_hulu": "76B",
+    "nomor_ka_hilir": "",
+    "nama_ka": "MATARAM",
+    "relasi": "PSE-SLO",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "03:01",
+    "jam_ber": "03:03",
+    "jalur": "4"
+  },
+  {
+    "no": "16",
+    "nomor_ka_hulu": "292",
+    "nomor_ka_hilir": "",
+    "nama_ka": "KUTOJAYA SELATAN",
+    "relasi": "KAC-KTA",
+    "kelas_ka": "EKO",
+    "jam_dat": "03:12",
+    "jam_ber": "03:14",
+    "jalur": "4"
+  },
+  {
+    "no": "17",
+    "nomor_ka_hulu": "150",
+    "nomor_ka_hilir": "",
+    "nama_ka": "SINGASARI",
+    "relasi": "PSE-BL",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "03:50",
+    "jam_ber": "03:52",
+    "jalur": "4"
+  },
+  {
+    "no": "18",
+    "nomor_ka_hulu": "64B",
+    "nomor_ka_hilir": "",
+    "nama_ka": "MANAHAN",
+    "relasi": "GMR-SLO",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "04:13",
+    "jalur": "3"
+  },
+  {
+    "no": "19",
+    "nomor_ka_hulu": "274",
+    "nomor_ka_hilir": "",
+    "nama_ka": "KAHURI PAN",
+    "relasi": "KAC-BL",
+    "kelas_ka": "EKO",
+    "jam_dat": "04:38",
+    "jam_ber": "04:40",
+    "jalur": "4"
+  },
+  {
+    "no": "20",
+    "nomor_ka_hulu": "258B",
+    "nomor_ka_hilir": "",
+    "nama_ka": "PROGO",
+    "relasi": "PSE-LPN",
+    "kelas_ka": "EKO",
+    "jam_dat": "04:51",
+    "jam_ber": "04:53",
+    "jalur": "2"
+  },
+  {
+    "no": "21",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "169B",
+    "nama_ka": "MALIOBORO EKSPRES",
+    "relasi": "ML-PWT",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "Ls",
+    "jam_ber": "03:18",
+    "jalur": "2"
+  },
+  {
+    "no": "22",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "111B",
+    "nama_ka": "SAWUNGGALIH",
+    "relasi": "KTA-PSE",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "07:16",
+    "jam_ber": "07:18",
+    "jalur": "2"
+  },
+  {
+    "no": "23",
+    "nomor_ka_hulu": "202",
+    "nomor_ka_hilir": "",
+    "nama_ka": "JOGLOSEMARKERTO",
+    "relasi": "CP-YK",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "07:16",
+    "jam_ber": "07:18",
+    "jalur": "4"
+  },
+  {
+    "no": "24",
+    "nomor_ka_hulu": "248B",
+    "nomor_ka_hilir": "",
+    "nama_ka": "LOGAWA",
+    "relasi": "PWT-SGU",
+    "kelas_ka": "EKO",
+    "jam_dat": "07:40",
+    "jam_ber": "07:42",
+    "jalur": "4"
+  },
+  {
+    "no": "25",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "109B",
+    "nama_ka": "FAJAR UTAMA YK",
+    "relasi": "YK-PSE",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "08:33",
+    "jam_ber": "08:46",
+    "jalur": "1"
+  },
+  {
+    "no": "26",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "43",
+    "nama_ka": "TAKSAKA",
+    "relasi": "YK-GMR",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "08:40",
+    "jalur": "2"
+  },
+  {
+    "no": "27",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "193A",
+    "nama_ka": "JOGLOSEMARKERTO",
+    "relasi": "SLO-TG-SMT-SLO",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "09:06",
+    "jam_ber": "09:08",
+    "jalur": "2"
+  },
+  {
+    "no": "28",
+    "nomor_ka_hulu": "170B",
+    "nomor_ka_hilir": "",
+    "nama_ka": "MALIOBORO EKSPRES",
+    "relasi": "PWT-ML",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "09:07",
+    "jam_ber": "09:09",
+    "jalur": "4"
+  },
+  {
+    "no": "29",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "77C",
+    "nama_ka": "LODAYA",
+    "relasi": "SLO-BD",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "09:34",
+    "jam_ber": "09:36",
+    "jalur": "2"
+  },
+  {
+    "no": "30",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "103B",
+    "nama_ka": "BOGOWONTO",
+    "relasi": "LPN-PSE",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "10:01",
+    "jam_ber": "10:03",
+    "jalur": "2"
+  },
+  {
+    "no": "31",
+    "nomor_ka_hulu": "154",
+    "nomor_ka_hilir": "",
+    "nama_ka": "RANGGAJATI",
+    "relasi": "CN-SGU",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "10:01",
+    "jam_ber": "10:03",
+    "jalur": "4"
+  },
+  {
+    "no": "32",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "13",
+    "nama_ka": "ARGO LAWU",
+    "relasi": "SLO-GMR",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "10:29",
+    "jalur": "2"
+  },
+  {
+    "no": "33",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "291A",
+    "nama_ka": "KUTOJAYA SELATAN",
+    "relasi": "KTA-KAC",
+    "kelas_ka": "EKO",
+    "jam_dat": "10:47",
+    "jam_ber": "10:49",
+    "jalur": "2"
+  },
+  {
+    "no": "34",
+    "nomor_ka_hulu": "74B",
+    "nomor_ka_hilir": "",
+    "nama_ka": "FAJAR UTAMA SOLO",
+    "relasi": "PSE-SLO",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "Ls",
+    "jam_ber": "11:04",
+    "jalur": "3"
+  },
+  {
+    "no": "35",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "75B",
+    "nama_ka": "MATARAM",
+    "relasi": "SLO-PSE",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "11:04",
+    "jam_ber": "11:06",
+    "jalur": "2"
+  },
+  {
+    "no": "36",
+    "nomor_ka_hulu": "6",
+    "nomor_ka_hilir": "",
+    "nama_ka": "ARGO SEMERU",
+    "relasi": "GMR-SGU",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "11:23",
+    "jalur": "3"
+  },
+  {
+    "no": "37",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "143B",
+    "nama_ka": "MADIUN JAYA",
+    "relasi": "MN-PSE",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "Ls",
+    "jam_ber": "11:31",
+    "jalur": "2"
+  },
+  {
+    "no": "38",
+    "nomor_ka_hulu": "78C",
+    "nomor_ka_hilir": "",
+    "nama_ka": "LODAYA",
+    "relasi": "BD-SLO",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "11:42",
+    "jam_ber": "11:44",
+    "jalur": "4"
+  },
+  {
+    "no": "39",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "275B",
+    "nama_ka": "PASUNDAN",
+    "relasi": "SGU-KAC",
+    "kelas_ka": "EKO",
+    "jam_dat": "11:48",
+    "jam_ber": "11:50",
+    "jalur": "2"
+  },
+  {
+    "no": "40",
+    "nomor_ka_hulu": "114C",
+    "nomor_ka_hilir": "",
+    "nama_ka": "SAWUNGGALIH",
+    "relasi": "PSE-KTA",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "11:53",
+    "jam_ber": "11:55",
+    "jalur": "4"
+  },
+  {
+    "no": "41",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "201",
+    "nama_ka": "JOGLOSEMARKERTO",
+    "relasi": "YK-CP",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "11:58",
+    "jam_ber": "12:12",
+    "jalur": "1"
+  },
+  {
+    "no": "42",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "61B",
+    "nama_ka": "MANAHAN",
+    "relasi": "SLO-GMR",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "12:07",
+    "jalur": "2"
+  },
+  {
+    "no": "43",
+    "nomor_ka_hulu": "10B",
+    "nomor_ka_hilir": "",
+    "nama_ka": "ARGO WILIS",
+    "relasi": "BD-SGU",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "12:18",
+    "jalur": "3"
+  },
+  {
+    "no": "44",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "161",
+    "nama_ka": "BANGUNKARTA",
+    "relasi": "JG-PSE",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "12:30",
+    "jam_ber": "12:32",
+    "jalur": "2"
+  },
+  {
+    "no": "45",
+    "nomor_ka_hulu": "46",
+    "nomor_ka_hilir": "",
+    "nama_ka": "TAKSAKA",
+    "relasi": "GMR-YK",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "12:37",
+    "jalur": "3"
+  },
+  {
+    "no": "46",
+    "nomor_ka_hulu": "187 (188)",
+    "nomor_ka_hilir": "",
+    "nama_ka": "JOGLOSEMARKERTO",
+    "relasi": "TG-SLO-SMT",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "12:47",
+    "jam_ber": "12:49",
+    "jalur": "4"
+  },
+  {
+    "no": "47",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "89",
+    "nama_ka": "GAYABARU MALAM SELATAN",
+    "relasi": "SGU-PSE",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "12:47",
+    "jam_ber": "13:03",
+    "jalur": "2"
+  },
+  {
+    "no": "48",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "69",
+    "nama_ka": "MALABAR",
+    "relasi": "ML-BD",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "Ls",
+    "jam_ber": "12:56",
+    "jalur": "2"
+  },
+  {
+    "no": "49",
+    "nomor_ka_hulu": "110B",
+    "nomor_ka_hilir": "",
+    "nama_ka": "FAJAR UTAMA YK",
+    "relasi": "PSE-YK",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "13:18",
+    "jam_ber": "13:20",
+    "jalur": "4"
+  },
+  {
+    "no": "50",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "9",
+    "nama_ka": "ARGO WILIS",
+    "relasi": "SGU-BD",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "13:29",
+    "jalur": "2"
+  },
+  {
+    "no": "51",
+    "nomor_ka_hulu": "16",
+    "nomor_ka_hilir": "",
+    "nama_ka": "ARGO DWIPANGGA",
+    "relasi": "GMR-SLO",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "13:40",
+    "jalur": "3"
+  },
+  {
+    "no": "52",
+    "nomor_ka_hulu": "106B",
+    "nomor_ka_hilir": "",
+    "nama_ka": "GAJAHWONG",
+    "relasi": "PSE-LPN",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "14:01",
+    "jam_ber": "14:03",
+    "jalur": "4"
+  },
+  {
+    "no": "53",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "5",
+    "nama_ka": "ARGO SEMERU",
+    "relasi": "SGU-GMR",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "14:17",
+    "jalur": "2"
+  },
+  {
+    "no": "54",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "115B",
+    "nama_ka": "SAWUNGGALIH",
+    "relasi": "KTA-PSE",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "14:29",
+    "jam_ber": "14:31",
+    "jalur": "2"
+  },
+  {
+    "no": "55",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "235F",
+    "nama_ka": "SANCAKA UTARA",
+    "relasi": "SLO-CP",
+    "kelas_ka": "EKS+BIS",
+    "jam_dat": "14:43",
+    "jam_ber": "14:45",
+    "jalur": "2"
+  },
+  {
+    "no": "56",
+    "nomor_ka_hulu": "70",
+    "nomor_ka_hilir": "",
+    "nama_ka": "MALABAR",
+    "relasi": "BD-ML",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "15:01",
+    "jam_ber": "15:03",
+    "jalur": "4"
+  },
+  {
+    "no": "57",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "257B",
+    "nama_ka": "PROGO",
+    "relasi": "LPN-PSE",
+    "kelas_ka": "EKO",
+    "jam_dat": "15:05",
+    "jam_ber": "15:07",
+    "jalur": "2"
+  },
+  {
+    "no": "58",
+    "nomor_ka_hulu": "282",
+    "nomor_ka_hilir": "",
+    "nama_ka": "BENGAWAN",
+    "relasi": "PSE-PWS",
+    "kelas_ka": "EKO",
+    "jam_dat": "15:18",
+    "jam_ber": "15:20",
+    "jalur": "4"
+  },
+  {
+    "no": "59",
+    "nomor_ka_hulu": "62B",
+    "nomor_ka_hilir": "",
+    "nama_ka": "MANAHAN",
+    "relasi": "GMR-SLO",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "15:54",
+    "jalur": "3"
+  },
+  {
+    "no": "60",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "47",
+    "nama_ka": "TAKSAKA",
+    "relasi": "YK-GMR",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "16:00",
+    "jalur": "2"
+  },
+  {
+    "no": "61",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "153",
+    "nama_ka": "RANGGAJATI",
+    "relasi": "SGU-CN",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "16:19",
+    "jam_ber": "16:21",
+    "jalur": "2"
+  },
+  {
+    "no": "62",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "167B",
+    "nama_ka": "KERTANEGARA",
+    "relasi": "ML-PWT",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "16:32",
+    "jam_ber": "16:34",
+    "jalur": "2"
+  },
+  {
+    "no": "63",
+    "nomor_ka_hulu": "158",
+    "nomor_ka_hilir": "",
+    "nama_ka": "WIJAYA KUSUMA",
+    "relasi": "CP-SGU-JR-KTG",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "16:38",
+    "jam_ber": "16:40",
+    "jalur": "4"
+  },
+  {
+    "no": "64",
+    "nomor_ka_hulu": "90",
+    "nomor_ka_hilir": "",
+    "nama_ka": "GAYABARU MALAM SELATAN",
+    "relasi": "PSE-SGU",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "17:12",
+    "jam_ber": "17:14",
+    "jalur": "4"
+  },
+  {
+    "no": "65",
+    "nomor_ka_hulu": "256B",
+    "nomor_ka_hilir": "",
+    "nama_ka": "JAKA TINGKIR",
+    "relasi": "PSE-SLO",
+    "kelas_ka": "EKO",
+    "jam_dat": "17:22",
+    "jam_ber": "17:24",
+    "jalur": "4"
+  },
+  {
+    "no": "66",
+    "nomor_ka_hulu": "276",
+    "nomor_ka_hilir": "",
+    "nama_ka": "PASUNDAN",
+    "relasi": "KAC-SGU",
+    "kelas_ka": "EKO",
+    "jam_dat": "17:34",
+    "jam_ber": "17:36",
+    "jalur": "4"
+  },
+  {
+    "no": "67",
+    "nomor_ka_hulu": "162",
+    "nomor_ka_hilir": "",
+    "nama_ka": "BANGUNKARTA",
+    "relasi": "PSE-JG",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "Ls",
+    "jam_ber": "18:19",
+    "jalur": "3"
+  },
+  {
+    "no": "68",
+    "nomor_ka_hulu": "112B",
+    "nomor_ka_hilir": "",
+    "nama_ka": "SAWUNGGALIH",
+    "relasi": "PSE-KTA",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "Ls",
+    "jam_ber": "18:30",
+    "jalur": "3"
+  },
+  {
+    "no": "69",
+    "nomor_ka_hulu": "236F",
+    "nomor_ka_hilir": "",
+    "nama_ka": "SANCAKA UTARA",
+    "relasi": "CP-SLO",
+    "kelas_ka": "EKS+BIS",
+    "jam_dat": "18:45",
+    "jam_ber": "18:59",
+    "jalur": "4"
+  },
+  {
+    "no": "70",
+    "nomor_ka_hulu": "44",
+    "nomor_ka_hilir": "",
+    "nama_ka": "TAKSAKA",
+    "relasi": "GMR-YK",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "18:53",
+    "jalur": "3"
+  },
+  {
+    "no": "71",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "107B",
+    "nama_ka": "SENJA UTAMA YK",
+    "relasi": "YK-PSE",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "19:02",
+    "jam_ber": "19:04",
+    "jalur": "2"
+  },
+  {
+    "no": "72",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "247B",
+    "nama_ka": "LOGAWA",
+    "relasi": "SGU-PWT",
+    "kelas_ka": "EKO",
+    "jam_dat": "19:27",
+    "jam_ber": "19:29",
+    "jalur": "2"
+  },
+  {
+    "no": "73",
+    "nomor_ka_hulu": "168B",
+    "nomor_ka_hilir": "",
+    "nama_ka": "KERTANEGARA",
+    "relasi": "PWT-ML",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "19:28",
+    "jam_ber": "19:30",
+    "jalur": "4"
+  },
+  {
+    "no": "74",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "251B",
+    "nama_ka": "JAYAKARTA",
+    "relasi": "SGU-PSE",
+    "kelas_ka": "EKO",
+    "jam_dat": "20:14",
+    "jam_ber": "20:16",
+    "jalur": "2"
+  },
+  {
+    "no": "75",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "113B",
+    "nama_ka": "SAWUNGGALIH",
+    "relasi": "KTA-PSE",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "20:59",
+    "jam_ber": "21:01",
+    "jalur": "2"
+  },
+  {
+    "no": "76",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "73B",
+    "nama_ka": "SENJA UTAMA SOLO",
+    "relasi": "SLO-PSE",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "Ls",
+    "jam_ber": "21:23",
+    "jalur": "2"
+  },
+  {
+    "no": "77",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "79B",
+    "nama_ka": "LODAYA",
+    "relasi": "SLO-BD",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "21:34",
+    "jam_ber": "21:36",
+    "jalur": "2"
+  },
+  {
+    "no": "78",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "35",
+    "nama_ka": "GAJAYANA",
+    "relasi": "ML-GMR",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "21:52",
+    "jalur": "2"
+  },
+  {
+    "no": "79",
+    "nomor_ka_hulu": "8",
+    "nomor_ka_hilir": "",
+    "nama_ka": "BIMA",
+    "relasi": "GMR-SGU",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "22:03",
+    "jalur": "3"
+  },
+  {
+    "no": "80",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "45",
+    "nama_ka": "TAKSAKA",
+    "relasi": "YK-GMR",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "22:15",
+    "jalur": "2"
+  },
+  {
+    "no": "81",
+    "nomor_ka_hulu": "12",
+    "nomor_ka_hilir": "",
+    "nama_ka": "TURANGGA",
+    "relasi": "BD-SGU",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "22:18",
+    "jalur": "3"
+  },
+  {
+    "no": "82",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "15",
+    "nama_ka": "ARGO DWIPANGGA",
+    "relasi": "SLO-GMR",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "22:34",
+    "jalur": "2"
+  },
+  {
+    "no": "83",
+    "nomor_ka_hulu": "252B",
+    "nomor_ka_hilir": "",
+    "nama_ka": "JAYAKARTA",
+    "relasi": "PSE-SGU",
+    "kelas_ka": "EKO",
+    "jam_dat": "22:46",
+    "jam_ber": "22:48",
+    "jalur": "4"
+  },
+  {
+    "no": "84",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "105B",
+    "nama_ka": "GAJAHWONG",
+    "relasi": "LPN-PSE",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "22:53",
+    "jam_ber": "22:55",
+    "jalur": "2"
+  },
+  {
+    "no": "85",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "149",
+    "nama_ka": "SINGASARI",
+    "relasi": "BL-PSE",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "23:20",
+    "jam_ber": "23:22",
+    "jalur": "2"
+  },
+  {
+    "no": "86",
+    "nomor_ka_hulu": "68",
+    "nomor_ka_hilir": "",
+    "nama_ka": "MALABAR",
+    "relasi": "BD-ML",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "23:21",
+    "jam_ber": "23:23",
+    "jalur": "4"
+  },
+  {
+    "no": "87",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "71",
+    "nama_ka": "MUTIARA SELATAN",
+    "relasi": "SGU-BD",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "23:45",
+    "jam_ber": "23:47",
+    "jalur": "2"
+  },
+  {
+    "no": "88",
+    "nomor_ka_hulu": "104B",
+    "nomor_ka_hilir": "",
+    "nama_ka": "BOGOWONTO",
+    "relasi": "PSE-LPN",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "23:47",
+    "jam_ber": "23:49",
+    "jalur": "4"
+  },
+  {
+    "no": "89",
+    "nomor_ka_hulu": "36",
+    "nomor_ka_hilir": "",
+    "nama_ka": "GAJAYANA",
+    "relasi": "GMR-ML",
+    "kelas_ka": "EKS",
+    "jam_dat": "Ls",
+    "jam_ber": "23:59",
+    "jalur": "3"
+  },
+  {
+    "no": "90",
+    "nomor_ka_hulu": "",
+    "nomor_ka_hilir": "157",
+    "nama_ka": "WIJAYA KUSUMA",
+    "relasi": "SGU-CP",
+    "kelas_ka": "EKS+EKO",
+    "jam_dat": "23:59",
+    "jam_ber": "00:01",
+    "jalur": "2"
+  }
+];
+    const FALLBACK_FACILITIES = [
+        { id: 1, name: 'Loket Tiket', icon: 'fa-solid fa-ticket' },
+        { id: 2, name: 'Ruang Tunggu Ber-AC', icon: 'fa-solid fa-couch' },
+        { id: 3, name: 'Toilet / WC', icon: 'fa-solid fa-restroom' },
+        { id: 4, name: 'Mushola', icon: 'fa-solid fa-person-praying' },
+        { id: 5, name: 'Area Parkir Luas', icon: 'fa-solid fa-square-parking' },
+        { id: 6, name: 'Galeri ATM', icon: 'fa-solid fa-money-bill-transfer' },
+        { id: 7, name: 'Mini Market', icon: 'fa-solid fa-store' },
+        { id: 8, name: 'Cetak Tiket Mandiri', icon: 'fa-solid fa-print' },
+        { id: 9, name: 'Aksesibilitas (Ramp)', icon: 'fa-solid fa-wheelchair' },
+        { id: 10, name: 'Ruang Laktasi', icon: 'fa-solid fa-baby' }
+    ];
+    const stationNames = {
+        KTA:'Kutoarjo', PSE:'Pasarsenen', ML:'Malang', BD:'Bandung',
+        SLO:'Solo Balapan', YK:'Yogyakarta', SGU:'Surabaya Gubeng',
+        PWT:'Purwokerto', GMR:'Gambir', MN:'Madiun', KAC:'Kiaracondong',
+        CP:'Cilacap', PWS:'Purwosari', BL:'Blitar', LPN:'Lempuyangan',
+        CN:'Cirebon', KTG:'Ketapang', JG:'Jombang', SMT:'Semarang Tawang'
+    };
+    const nameMap = {
+        'MALABAR':'Malabar','LODAYA':'Lodaya','SENA UTAMA YK':'Senja Utama YK',
+        'BIMA':'Bima','MANAHAN':'Manahan','MUTIARA SELATAN':'Mutiara Selatan',
+        'TURANGGA':'Turangga','SAWUNGGALIH':'Sawunggalih','BENGAWAN':'Bengawan',
+        'ARGO LAWU':'Argo Lawu','KAHURI PAN':'Kahuripan','JAKA TINGKIR':'Jaka Tingkir',
+        'TAKSAKA':'Taksaka','MADIUN JAYA':'Madiun Jaya','MATARAM':'Mataram',
+        'KUTOJAYA SELATAN':'Kutojaya Selatan','SINGASARI':'Singasari',
+        'MALIOBORO EKSPRES':'Malioboro Ekspres','JOGLOSEMARKERTO':'Joglosemarkerto',
+        'LOGAWA':'Logawa','FAJAR UTAMA YK':'Fajar Utama YK','JAYAKARTA':'Jayakarta',
+        'GAJAHWONG':'Gajahwong','RANGGAJATI':'Ranggajati','KERTANEGARA':'Kertanegara',
+        'WIJAYAKUSUMA':'Wijayakusuma','GAYABARU MALAM SELATAN':'Gayabaru Malam Selatan',
+        'PASUNDAN':'Pasundan','PROGO':'Progo','SANCAKA UTARA':'Sancaka Utara',
+        'MALABAR':'Malabar','BANGUNKARTA':'Bangunkarta','MATARAM':'Mataram'
+    };
+    let fallbackTab='berangkat', fallbackSearch='';
+
+    function esc(v) { return String(v ?? '—').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+    function className(v) {
+        const x=String(v||'').trim().toUpperCase();
+        if(x==='EKS') return 'Eksekutif';
+        if(x==='EKO') return 'Ekonomi';
+        if(x==='EKS+EKO' || x==='EKO+EKS') return 'Eksekutif dan Ekonomi';
+        if(x==='EKS+BIS' || x==='BIS+EKS') return 'Eksekutif dan Bisnis';
+        return v || '—';
+    }
+    function relation(v) {
+        const raw=String(v||'').trim();
+        if(!raw || raw==='-') return '—';
+        if(/[()]/.test(raw)) return raw;
+        if(/^[A-Z]{2,4}-[A-Z]{2,4}$/.test(raw)) {
+            return raw.split('-').map(c => `${stationNames[c]||c} (${c})`).join(' - ');
+        }
+        return raw;
+    }
+    function trainNumber(r) {
+        const name=String(r.nama_ka||'').trim().toUpperCase();
+        const rel=String(r.relasi||'').trim().toUpperCase();
+        if(name==='BIMA' && rel==='SLO-GMR') return '7';
+        if(name==='BIMA' && rel==='GMR-SGU') return '8';
+        return r.nomor_ka_hulu || r.nomor_ka_hilir || '—';
+    }
+    function trainName(v) { return nameMap[String(v||'').trim().toUpperCase()] || String(v||'—'); }
+    function isLs(v) { return String(v||'').trim().toLowerCase()==='ls'; }
+    function makeDisplay() {
+        const result=[];
+        RAW_SCHEDULES.forEach((r,i)=>{
+            const base={ id:r.no||i+1, name:trainName(r.nama_ka), trainNumber:String(trainNumber(r)), relation:relation(r.relasi), className:className(r.kelas_ka), jalur:r.jalur||'—' };
+            const dat=String(r.jam_dat||'').trim(), ber=String(r.jam_ber||'').trim();
+            const datLs=isLs(dat), berLs=isLs(ber);
+            if(datLs) {
+                if(ber && !berLs) result.push({...base,id:`${base.id}-ber`,type:'berangkat',time:ber,direct:true});
+            } else if(dat) {
+                result.push({...base,id:`${base.id}-dat`,type:'datang',time:dat,direct:false});
+            }
+            if(ber && !berLs && !datLs) result.push({...base,id:`${base.id}-ber`,type:'berangkat',time:ber,direct:false});
+            else if(berLs && !datLs && dat) result.push({...base,id:`${base.id}-ber-ls`,type:'berangkat',time:dat,direct:true});
+        });
+        return result;
+    }
+    window.__fallbackMakeDisplay = makeDisplay;
+    function getSchedules() {
+        try {
+            const raw=localStorage.getItem('gombong_schedules');
+            if(raw) {
+                const parsed=JSON.parse(raw);
+                if(Array.isArray(parsed) && parsed.length) {
+                    // Cache lama dapat berupa format display atau format import.
+                    if(parsed.some(x=>x && (x.jam_dat!==undefined || x.nama_ka!==undefined))) return makeDisplayFrom(parsed);
+                    return parsed;
+                }
+            }
+        } catch(e) {}
+        return makeDisplay();
+    }
+    function makeDisplayFrom(arr) {
+        const out=[];
+        arr.forEach((r,i)=>{
+            if(r && (r.jam_dat!==undefined || r.nama_ka!==undefined)) {
+                const base={id:r.id??i+1,name:trainName(r.nama_ka||r.name),trainNumber:String(r.nomor_ka||r.nomor_ka_hulu||r.nomor_ka_hilir||trainNumber(r)),relation:relation(r.relasi||r.relation),className:className(r.kelas_ka||r.kelas||r.className),jalur:r.jalur||r.track||'—'};
+                const dat=String(r.jam_dat??r.arrival??'').trim(), ber=String(r.jam_ber??r.departure??'').trim();
+                if(isLs(dat)) { if(ber && !isLs(ber)) out.push({...base,id:`${base.id}-ber`,type:'berangkat',time:ber,direct:true}); }
+                else if(dat) out.push({...base,id:`${base.id}-dat`,type:'datang',time:dat,direct:false});
+                if(ber && !isLs(ber) && !isLs(dat)) out.push({...base,id:`${base.id}-ber`,type:'berangkat',time:ber,direct:false});
+                else if(isLs(ber) && !isLs(dat) && dat) out.push({...base,id:`${base.id}-ber-ls`,type:'berangkat',time:dat,direct:true});
+            } else if(r && r.type) {
+                out.push({...r,trainNumber:r.trainNumber||r.number||r.kaNumber||'—',className:r.className||r.kelas||'—',jalur:r.jalur||r.track||'—',relation:relation(r.relation)});
+            }
+        });
+        return out.length ? out : makeDisplay();
+    }
+    function renderFallback() {
+        const schedules=getSchedules();
+        const tbody=document.getElementById('tbody-jadwal');
+        if(tbody) {
+            let rows=schedules.filter(s=>s && s.type===fallbackTab && !(fallbackTab==='datang' && s.direct));
+            if(fallbackSearch) rows=rows.filter(s=>[s.trainNumber,s.name,s.relation,s.className,s.jalur,s.time].filter(Boolean).join(' ').toLowerCase().includes(fallbackSearch));
+            tbody.innerHTML=rows.length ? rows.map(s=>`<tr>
+                <td class="align-top font-bold text-gray-800 whitespace-nowrap">${esc(s.trainNumber)}</td>
+                <td class="align-top font-medium text-gray-800">${esc(s.name)}</td>
+                <td class="align-top text-gray-600 text-xs min-w-[220px]">${esc(s.relation)}</td>
+                <td class="align-top text-gray-600 text-xs whitespace-nowrap">${esc(s.className)}</td>
+                <td class="align-top text-gray-600 text-xs text-center">${esc(s.jalur)}</td>
+                <td class="align-top text-center font-bold text-kai-blue whitespace-nowrap">${s.direct?'<div class="text-[9px] text-kai-orange font-bold uppercase tracking-wide mb-0.5">Langsung</div>':''}${s.direct?'':esc(s.time)}</td>
+            </tr>`).join('') : '<tr><td colspan="6" class="text-center py-6 text-gray-500">Jadwal tidak ditemukan</td></tr>';
+        }
+        const home=document.getElementById('home-schedule-container');
+        if(home) {
+            const deps=schedules.filter(s=>s&&s.type==='berangkat'&&s.time).sort((a,b)=>String(a.time).localeCompare(String(b.time)));
+            const now=new Date(), cur=now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
+            deps.forEach(s=>{let t=Number(s.time.split(':')[0])*60+Number(s.time.split(':')[1]);let d=t-cur;if(d<0)d+=1440;s._d=d;});
+            deps.sort((a,b)=>a._d-b._d);
+            const nearest=deps.slice(0,3);
+            home.innerHTML=nearest.map(s=>`<div class="flex items-center justify-between border-b pb-2.5 last:border-0 last:pb-0"><div class="flex items-center gap-3"><div class="bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1 text-kai-blue min-w-[60px] text-center shadow-sm">${s.direct?'<div class="text-[9px] text-kai-orange font-bold uppercase">Langsung</div>':''}<div class="font-bold text-sm">${esc(s.time)}</div></div><div><p class="font-bold text-sm text-gray-800">${esc(s.name)}</p><p class="text-xs text-gray-500 truncate max-w-[220px]">Relasi: ${esc(s.relation)}</p></div></div><i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i></div>`).join('') || '<p class="text-sm text-gray-500 italic text-center py-2">Tidak ada keberangkatan terdekat.</p>';
+        }
+    }
+    function renderFallbackFacilities() {
+        const c=document.getElementById('fasilitas-container');
+        if(!c) return;
+        let facilities=FALLBACK_FACILITIES;
+        try { const raw=localStorage.getItem('gombong_facilities'); const parsed=raw?JSON.parse(raw):null; if(Array.isArray(parsed)&&parsed.length) facilities=parsed; } catch(e) {}
+        c.innerHTML=facilities.map(f=>`<div class="card flex flex-col items-center justify-center text-center !p-4 !mb-0 h-full"><div class="w-12 h-12 bg-gray-50 text-kai-orange rounded-full flex items-center justify-center text-xl mb-2"><i class="${esc(f.icon||'fa-solid fa-circle-info')}"></i></div><span class="text-xs font-semibold text-gray-700">${esc(f.name)}</span></div>`).join('');
+    }
+    function startFallbackClock() {
+        const tick=()=>{const n=new Date();const el=document.getElementById('bmkg-clock-display');if(el)el.textContent=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')} WIB`;};
+        tick(); setInterval(tick,1000);
+    }
+    // Public navigation fallback: buttons must work even if the Firebase module is unavailable.
+    window.switchPage=function(pageId) {
+        if(pageId==='admin'){ window.location.href='admin-login.html'; return; }
+        document.querySelectorAll('.page-content').forEach(el=>el.classList.remove('active'));
+        const page=document.getElementById('page-'+pageId);
+        if(page) page.classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+        const nav=document.getElementById('nav-'+pageId);
+        if(nav) nav.classList.add('active');
+        window.scrollTo(0,0);
+        const wrap=document.querySelector('#page-jadwal .overflow-x-auto');
+        if(wrap) wrap.scrollLeft=0;
+    };
+    window.switchTab=function(type) { fallbackTab=type; const a=document.getElementById('btn-tab-berangkat'),d=document.getElementById('btn-tab-datang'); if(a&&d){a.className=type==='berangkat'?'flex-1 py-2 text-sm font-medium rounded-md bg-white text-kai-blue shadow-sm':'flex-1 py-2 text-sm font-medium rounded-md text-gray-600';d.className=type==='datang'?'flex-1 py-2 text-sm font-medium rounded-md bg-white text-kai-blue shadow-sm':'flex-1 py-2 text-sm font-medium rounded-md text-gray-600';} renderFallback(); };
+    window.switchAdminTab=function(type){
+        const j=document.getElementById('admin-jadwal-section'), f=document.getElementById('admin-fasilitas-section');
+        const bj=document.getElementById('btn-admin-jadwal'), bf=document.getElementById('btn-admin-fasilitas');
+        if(!j||!f||!bj||!bf) return;
+        const active='flex-1 py-2 text-sm font-medium rounded-md bg-white text-kai-blue shadow-sm';
+        const idle='flex-1 py-2 text-sm font-medium rounded-md text-gray-600';
+        const isJ=type==='jadwal'; j.style.display=isJ?'block':'none'; f.style.display=isJ?'none':'block'; bj.className=isJ?active:idle; bf.className=isJ?idle:active;
+    };
+    window.downloadMock=function(filename){ showToast('Mengunduh dokumen: '+filename+'...'); setTimeout(()=>showToast('Unduhan '+filename+' selesai.'),800); };
+    window.copyToClipboard=function(text){
+        try { navigator.clipboard?.writeText(text); } catch(e) {}
+        const el=document.createElement('textarea'); el.value=text; el.style.position='fixed'; el.style.opacity='0'; document.body.appendChild(el); el.select(); try{document.execCommand('copy');}catch(e){} document.body.removeChild(el); showToast('Disalin ke papan klip!');
+    };
+    window.handleLogout=function(){ window.switchPage('home'); showToast('Berhasil kembali ke website utama.'); };
+    window.resetData=function(){ if(confirm('Apakah Anda yakin ingin mereset semua data ke pengaturan awal?')){ localStorage.removeItem('gombong_schedules'); localStorage.removeItem('gombong_facilities'); renderFallback(); renderFallbackFacilities(); showToast('Data berhasil dikembalikan ke semula!'); } };
+    window.promptInstallApp=window.promptInstallApp||function(){ showToast("Untuk menginstall, buka menu browser lalu pilih 'Tambahkan ke Layar Utama'."); };
+
+    document.addEventListener('DOMContentLoaded',()=>{
+        const input=document.getElementById('search-jadwal');
+        if(input) input.addEventListener('input',()=>{fallbackSearch=input.value.toLowerCase();renderFallback();});
+        renderFallback(); renderFallbackFacilities(); startFallbackClock();
+        // Bila modul Firebase kemudian berhasil, modul tersebut akan mengambil alih data cloud.
+        setTimeout(()=>{renderFallbackFacilities();},1500);
+    });
+})();
+</script>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'stasiun-gombong-gb';
-        const appFirebaseConfig = (typeof firebaseConfig !== 'undefined') ? firebaseConfig : ((typeof window.firebaseConfig !== 'undefined') ? window.firebaseConfig : (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null));
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "demo", projectId: "demo" };
 
         let app, db, auth;
         try {
-            if (!appFirebaseConfig) throw new Error("firebaseConfig tidak ditemukan. Pastikan firebase-config.js tersedia.");
-            app = initializeApp(appFirebaseConfig);
+            app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
         } catch (e) {
             console.warn("Firebase init fallback", e);
         }
 
-        const defaultSchedules = [
-            { id: 1, type: 'berangkat', name: 'Malabar', relation: 'Bandung (BD) - Malang (ML)', time: '00:14' },
-            { id: 2, type: 'berangkat', name: 'Lodaya', relation: 'Bandung (BD) - Solo Balapan (SLO)', time: '00:14' },
-            { id: 3, type: 'berangkat', name: 'Senja Utama YK', relation: 'Pasar Senen (PSE) - Yogyakarta (YK)', time: '00:26' },
-            { id: 4, type: 'berangkat', name: 'Mutiara Selatan', relation: 'Bandung (BD) - Surabaya Gubeng (SGU)', time: '01:09' },
-            { id: 5, type: 'berangkat', name: 'Bengawan', relation: 'Purwosari (PWS) - Pasar Senen (PSE)', time: '01:30' },
-            { id: 6, type: 'berangkat', name: 'Jaka Tingkir', relation: 'Solo Balapan (SLO) - Pasar Senen (PSE)', time: '02:12' },
-            { id: 7, type: 'berangkat', name: 'Mataram', relation: 'Pasar Senen (PSE) - Solo Balapan (SLO)', time: '03:03' },
-            { id: 8, type: 'berangkat', name: 'Kutojaya Selatan', relation: 'Kiaracondong (KAC) - Kutoarjo (KTA)', time: '03:14' },
-            { id: 9, type: 'berangkat', name: 'Singasari', relation: 'Pasar Senen (PSE) - Blitar (BL)', time: '03:52' },
-            { id: 10, type: 'berangkat', name: 'Kahuripan', relation: 'Kiaracondong (KAC) - Blitar (BL)', time: '04:40' },
-            { id: 11, type: 'berangkat', name: 'Progo', relation: 'Pasar Senen (PSE) - Lempuyangan (LPN)', time: '04:53' },
-            { id: 12, type: 'berangkat', name: 'Sawunggalih', relation: 'Kutoarjo (KTA) - Pasar Senen (PSE)', time: '07:18' },
-            { id: 13, type: 'berangkat', name: 'Joglosemarkerto', relation: 'Cilacap (CP) - Yogyakarta (YK)', time: '07:18' },
-            { id: 14, type: 'berangkat', name: 'Logawa', relation: 'Purwokerto (PWT) - Surabaya Gubeng (SGU)', time: '07:42' },
-            { id: 15, type: 'berangkat', name: 'Fajar Utama YK', relation: 'Yogyakarta (YK) - Pasar Senen (PSE)', time: '08:46' },
-            { id: 16, type: 'berangkat', name: 'Joglosemarkerto', relation: 'Solo Balapan (SLO) - Solo Balapan (SLO)', time: '09:08' },
-            { id: 17, type: 'berangkat', name: 'Malioboro Ekspres', relation: 'Purwokerto (PWT) - Malang (ML)', time: '09:09' },
-            { id: 18, type: 'berangkat', name: 'Lodaya', relation: 'Solo Balapan (SLO) - Bandung (BD)', time: '09:36' },
-            { id: 19, type: 'berangkat', name: 'Bogowonto', relation: 'Lempuyangan (LPN) - Pasar Senen (PSE)', time: '10:03' },
-            { id: 20, type: 'berangkat', name: 'Ranggajati', relation: 'Cirebon (CN) - Surabaya Gubeng (SGU)', time: '10:03' },
-            { id: 21, type: 'berangkat', name: 'Kutojaya Selatan', relation: 'Kutoarjo (KTA) - Kiaracondong (KAC)', time: '10:49' },
-            { id: 22, type: 'berangkat', name: 'Mataram', relation: 'Solo Balapan (SLO) - Pasar Senen (PSE)', time: '11:06' },
-            { id: 23, type: 'berangkat', name: 'Lodaya', relation: 'Bandung (BD) - Solo Balapan (SLO)', time: '11:44' },
-            { id: 24, type: 'berangkat', name: 'Pasundan', relation: 'Surabaya Gubeng (SGU) - Kiaracondong (KAC)', time: '11:50' },
-            { id: 25, type: 'berangkat', name: 'Sawunggalih', relation: 'Pasar Senen (PSE) - Kutoarjo (KTA)', time: '11:55' },
-            { id: 26, type: 'berangkat', name: 'Joglosemarkerto', relation: 'Yogyakarta (YK) - Cilacap (CP)', time: '12:12' },
-            { id: 27, type: 'berangkat', name: 'Bangunkarta', relation: 'Jombang (JG) - Pasar Senen (PSE)', time: '12:32' },
-            { id: 28, type: 'berangkat', name: 'Joglosemarkerto', relation: 'Solo Balapan (SLO) - Semarang Tawang (SMT)', time: '12:49' },
-            { id: 29, type: 'berangkat', name: 'Fajar Utama YK', relation: 'Pasar Senen (PSE) - Yogyakarta (YK)', time: '13:20' },
-            { id: 30, type: 'berangkat', name: 'Gajahwong', relation: 'Pasar Senen (PSE) - Lempuyangan (LPN)', time: '14:03' },
-            { id: 31, type: 'berangkat', name: 'Sancaka Utara', relation: 'Solo Balapan (SLO) - Cilacap (CP)', time: '14:45' },
-            { id: 32, type: 'berangkat', name: 'Malabar', relation: 'Bandung (BD) - Malang (ML)', time: '15:03' },
-            { id: 33, type: 'berangkat', name: 'Progo', relation: 'Lempuyangan (LPN) - Pasar Senen (PSE)', time: '15:07' },
-            { id: 34, type: 'berangkat', name: 'Bengawan', relation: 'Pasar Senen (PSE) - Purwosari (PWS)', time: '15:20' },
-            { id: 35, type: 'berangkat', name: 'Ranggajati', relation: 'Surabaya Gubeng (SGU) - Cirebon (CN)', time: '16:21' },
-            { id: 36, type: 'berangkat', name: 'Kertanegara', relation: 'Malang (ML) - Purwokerto (PWT)', time: '16:34' },
-            { id: 37, type: 'berangkat', name: 'Wijayakusuma', relation: 'Cilacap (CP) - Ketapang (KTG)', time: '16:40' },
-            { id: 38, type: 'berangkat', name: 'Gayabaru Malam Selatan', relation: 'Pasar Senen (PSE) - Surabaya Gubeng (SGU)', time: '17:14' },
-            { id: 39, type: 'berangkat', name: 'Jaka Tingkir', relation: 'Pasar Senen (PSE) - Solo Balapan (SLO)', time: '17:24' },
-            { id: 40, type: 'berangkat', name: 'Pasundan', relation: 'Kiaracondong (KAC) - Surabaya Gubeng (SGU)', time: '17:36' },
-            { id: 41, type: 'berangkat', name: 'Sancaka Utara', relation: 'Cilacap (CP) - Solo Balapan (SLO)', time: '18:59' },
-            { id: 42, type: 'berangkat', name: 'Senja Utama YK', relation: 'Yogyakarta (YK) - Pasar Senen (PSE)', time: '19:04' },
-            { id: 43, type: 'berangkat', name: 'Logawa', relation: 'Surabaya Gubeng (SGU) - Purwokerto (PWT)', time: '19:29' },
-            { id: 44, type: 'berangkat', name: 'Kertanegara', relation: 'Purwokerto (PWT) - Malang (ML)', time: '19:30' },
-            { id: 45, type: 'berangkat', name: 'Jayakarta', relation: 'Surabaya Gubeng (SGU) - Pasar Senen (PSE)', time: '20:16' },
-            { id: 46, type: 'berangkat', name: 'Sawunggalih', relation: 'Kutoarjo (KTA) - Pasar Senen (PSE)', time: '21:01' },
-            { id: 47, type: 'berangkat', name: 'Lodaya', relation: 'Solo Balapan (SLO) - Bandung (BD)', time: '21:36' },
-            { id: 48, type: 'berangkat', name: 'Jayakarta', relation: 'Pasar Senen (PSE) - Surabaya Gubeng (SGU)', time: '22:48' },
-            { id: 49, type: 'berangkat', name: 'Gajahwong', relation: 'Lempuyangan (LPN) - Pasar Senen (PSE)', time: '22:55' },
-            { id: 50, type: 'berangkat', name: 'Singasari', relation: 'Blitar (BL) - Pasar Senen (PSE)', time: '23:22' },
-            { id: 51, type: 'berangkat', name: 'Malabar', relation: 'Bandung (BD) - Malang (ML)', time: '23:23' },
-            { id: 52, type: 'berangkat', name: 'Mutiara Selatan', relation: 'Surabaya Gubeng (SGU) - Bandung (BD)', time: '23:47' },
-            { id: 53, type: 'berangkat', name: 'Bogowonto', relation: 'Pasar Senen (PSE) - Lempuyangan (LPN)', time: '23:49' },
-            { id: 54, type: 'berangkat', name: 'Wijayakusuma', relation: 'Ketapang (KTG) - Cilacap (CP)', time: '00:01' },
-            { id: 55, type: 'datang', name: 'Malabar', relation: 'Malang (ML) - Bandung (BD)', time: '00:12' },
-            { id: 56, type: 'datang', name: 'Lodaya', relation: 'Bandung (BD) - Solo Balapan (SLO)', time: '00:12' },
-            { id: 57, type: 'datang', name: 'Senja Utama YK', relation: 'Pasar Senen (PSE) - Yogyakarta (YK)', time: '00:24' },
-            { id: 58, type: 'datang', name: 'Mutiara Selatan', relation: 'Bandung (BD) - Surabaya Gubeng (SGU)', time: '01:07' },
-            { id: 59, type: 'datang', name: 'Bengawan', relation: 'Purwosari (PWS) - Pasar Senen (PSE)', time: '01:28' },
-            { id: 60, type: 'datang', name: 'Jaka Tingkir', relation: 'Solo Balapan (SLO) - Pasar Senen (PSE)', time: '02:10' },
-            { id: 61, type: 'datang', name: 'Mataram', relation: 'Pasar Senen (PSE) - Solo Balapan (SLO)', time: '03:01' },
-            { id: 62, type: 'datang', name: 'Kutojaya Selatan', relation: 'Kiaracondong (KAC) - Kutoarjo (KTA)', time: '03:12' },
-            { id: 63, type: 'datang', name: 'Singasari', relation: 'Pasar Senen (PSE) - Blitar (BL)', time: '03:50' },
-            { id: 64, type: 'datang', name: 'Kahuripan', relation: 'Kiaracondong (KAC) - Blitar (BL)', time: '04:38' },
-            { id: 65, type: 'datang', name: 'Progo', relation: 'Pasar Senen (PSE) - Lempuyangan (LPN)', time: '04:51' },
-            { id: 66, type: 'datang', name: 'Sawunggalih', relation: 'Kutoarjo (KTA) - Pasar Senen (PSE)', time: '07:16' },
-            { id: 67, type: 'datang', name: 'Joglosemarkerto', relation: 'Cilacap (CP) - Yogyakarta (YK)', time: '07:16' },
-            { id: 68, type: 'datang', name: 'Logawa', relation: 'Purwokerto (PWT) - Surabaya Gubeng (SGU)', time: '07:40' },
-            { id: 69, type: 'datang', name: 'Fajar Utama YK', relation: 'Yogyakarta (YK) - Pasar Senen (PSE)', time: '08:33' },
-            { id: 70, type: 'datang', name: 'Joglosemarkerto', relation: 'Solo Balapan (SLO) - Semarang Tawang (SMT)', time: '09:06' },
-            { id: 71, type: 'datang', name: 'Malioboro Ekspres', relation: 'Purwokerto (PWT) - Malang (ML)', time: '09:07' },
-            { id: 72, type: 'datang', name: 'Lodaya', relation: 'Solo Balapan (SLO) - Bandung (BD)', time: '09:34' },
-            { id: 73, type: 'datang', name: 'Bogowonto', relation: 'Lempuyangan (LPN) - Pasar Senen (PSE)', time: '10:01' },
-            { id: 74, type: 'datang', name: 'Ranggajati', relation: 'Cirebon (CN) - Surabaya Gubeng (SGU)', time: '10:01' },
-            { id: 75, type: 'datang', name: 'Kutojaya Selatan', relation: 'Kutoarjo (KTA) - Kiaracondong (KAC)', time: '10:47' },
-            { id: 76, type: 'datang', name: 'Mataram', relation: 'Solo Balapan (SLO) - Pasar Senen (PSE)', time: '11:04' },
-            { id: 77, type: 'datang', name: 'Lodaya', relation: 'Bandung (BD) - Solo Balapan (SLO)', time: '11:42' },
-            { id: 78, type: 'datang', name: 'Pasundan', relation: 'Surabaya Gubeng (SGU) - Kiaracondong (KAC)', time: '11:48' },
-            { id: 79, type: 'datang', name: 'Sawunggalih', relation: 'Pasar Senen (PSE) - Kutoarjo (KTA)', time: '11:53' },
-            { id: 80, type: 'datang', name: 'Joglosemarkerto', relation: 'Yogyakarta (YK) - Cilacap (CP)', time: '11:58' },
-            { id: 81, type: 'datang', name: 'Bangunkarta', relation: 'Jombang (JG) - Pasar Senen (PSE)', time: '12:30' },
-            { id: 82, type: 'datang', name: 'Joglosemarkerto', relation: 'Semarang Tawang (SMT) - Solo Balapan (SLO)', time: '12:47' },
-            { id: 83, type: 'datang', name: 'Fajar Utama YK', relation: 'Pasar Senen (PSE) - Yogyakarta (YK)', time: '13:18' },
-            { id: 84, type: 'datang', name: 'Gajahwong', relation: 'Pasar Senen (PSE) - Lempuyangan (LPN)', time: '14:01' },
-            { id: 85, type: 'datang', name: 'Sancaka Utara', relation: 'Solo Balapan (SLO) - Cilacap (CP)', time: '14:43' },
-            { id: 86, type: 'datang', name: 'Malabar', relation: 'Bandung (BD) - Malang (ML)', time: '15:01' },
-            { id: 87, type: 'datang', name: 'Progo', relation: 'Lempuyangan (LPN) - Pasar Senen (PSE)', time: '15:05' },
-            { id: 88, type: 'datang', name: 'Bengawan', relation: 'Pasar Senen (PSE) - Purwosari (PWS)', time: '15:18' },
-            { id: 89, type: 'datang', name: 'Ranggajati', relation: 'Surabaya Gubeng (SGU) - Cirebon (CN)', time: '16:19' },
-            { id: 90, type: 'datang', name: 'Kertanegara', relation: 'Malang (ML) - Purwokerto (PWT)', time: '16:32' },
-            { id: 91, type: 'datang', name: 'Wijayakusuma', relation: 'Cilacap (CP) - Ketapang (KTG)', time: '16:38' },
-            { id: 92, type: 'datang', name: 'Gayabaru Malam Selatan', relation: 'Pasar Senen (PSE) - Surabaya Gubeng (SGU)', time: '17:12' },
-            { id: 93, type: 'datang', name: 'Jaka Tingkir', relation: 'Pasar Senen (PSE) - Solo Balapan (SLO)', time: '17:22' },
-            { id: 94, type: 'datang', name: 'Pasundan', relation: 'Kiaracondong (KAC) - Surabaya Gubeng (SGU)', time: '17:34' },
-            { id: 95, type: 'datang', name: 'Sancaka Utara', relation: 'Cilacap (CP) - Solo Balapan (SLO)', time: '18:45' },
-            { id: 96, type: 'datang', name: 'Senja Utama YK', relation: 'Yogyakarta (YK) - Pasar Senen (PSE)', time: '19:02' },
-            { id: 97, type: 'datang', name: 'Logawa', relation: 'Surabaya Gubeng (SGU) - Purwokerto (PWT)', time: '19:27' },
-            { id: 98, type: 'datang', name: 'Kertanegara', relation: 'Purwokerto (PWT) - Malang (ML)', time: '19:28' },
-            { id: 99, type: 'datang', name: 'Jayakarta', relation: 'Surabaya Gubeng (SGU) - Pasar Senen (PSE)', time: '20:14' },
-            { id: 100, type: 'datang', name: 'Sawunggalih', relation: 'Kutoarjo (KTA) - Pasar Senen (PSE)', time: '20:59' },
-            { id: 101, type: 'datang', name: 'Lodaya', relation: 'Solo Balapan (SLO) - Bandung (BD)', time: '21:34' },
-            { id: 102, type: 'datang', name: 'Jayakarta', relation: 'Pasar Senen (PSE) - Surabaya Gubeng (SGU)', time: '22:46' },
-            { id: 103, type: 'datang', name: 'Gajahwong', relation: 'Lempuyangan (LPN) - Pasar Senen (PSE)', time: '22:53' },
-            { id: 104, type: 'datang', name: 'Singasari', relation: 'Blitar (BL) - Pasar Senen (PSE)', time: '23:20' },
-            { id: 105, type: 'datang', name: 'Malabar', relation: 'Bandung (BD) - Malang (ML)', time: '23:21' },
-            { id: 106, type: 'datang', name: 'Mutiara Selatan', relation: 'Surabaya Gubeng (SGU) - Bandung (BD)', time: '23:45' },
-            { id: 107, type: 'datang', name: 'Bogowonto', relation: 'Pasar Senen (PSE) - Lempuyangan (LPN)', time: '23:47' },
-            { id: 108, type: 'datang', name: 'Wijayakusuma', relation: 'Surabaya Gubeng (SGU) - Cilacap (CP)', time: '23:59' }
-        ];
+        // Jadwal default selalu dibangun dari tabel 90 KA RAW agar metadata lengkap.
+        const defaultSchedules = (window.__fallbackMakeDisplay ? window.__fallbackMakeDisplay() : []);
 
         const defaultFacilities = [
             { id: 1, name: 'Loket Tiket', icon: 'fa-solid fa-ticket' },
@@ -1017,15 +2060,11 @@
                     } else {
                         await signInAnonymously(auth);
                     }
+                    setupFirestoreSync();
                 } catch (e) {
-                    console.warn("Firebase Auth offline/nonaktif; pembacaan publik tetap dilanjutkan:", e);
-                    if (db) console.log("Firestore tetap digunakan tanpa login admin.");
+                    console.warn("Auth/Cloud offline mode active:", e);
                 }
             }
-
-            // Jadwal Firestore bersifat publik (aturan Firestore mengizinkan read).
-            // Karena itu website utama TIDAK boleh menunggu login admin untuk membaca jadwal.
-            setupFirestoreSync();
             
             document.getElementById('search-jadwal').addEventListener('input', (e) => {
                 searchQuery = e.target.value.toLowerCase();
@@ -1123,613 +2162,171 @@
             clockTimer = setInterval(updateClock, 1000);
         }
 
+        // Firestore import format helpers (90-record DAT/BER table).
         function escapeHtml(value) {
-            return String(value ?? '')
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
+            return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
         }
-
         function formatClass(value) {
             const raw = String(value || '').trim().toUpperCase();
-            if (raw === 'EKO') return 'Ekonomi';
             if (raw === 'EKS') return 'Eksekutif';
+            if (raw === 'EKO') return 'Ekonomi';
             if (raw === 'EKS+EKO' || raw === 'EKO+EKS') return 'Eksekutif dan Ekonomi';
+            if (raw === 'EKS+BIS' || raw === 'BIS+EKS') return 'Eksekutif dan Bisnis';
             return value || '-';
         }
-
         function formatRelation(value) {
             const raw = String(value || '').trim();
-            if (!raw) return '-';
-            if (!/^[A-Z]{2,4}(?:-[A-Z]{2,4})+$/.test(raw)) return raw;
-            const stationNames = {
-                KTA:'Kutoarjo', PSE:'Pasarsenen', ML:'Malang', BD:'Bandung',
-                SLO:'Solo Balapan', YK:'Yogyakarta', SGU:'Surabaya Gubeng',
-                PWT:'Purwokerto', GMR:'Gambir', MN:'Madiun', KAC:'Kiaracondong',
-                CP:'Cilacap', PWS:'Purwosari', BL:'Blitar', LPN:'Lempuyangan',
-                JG:'Jatibarang', CN:'Cirebon', TG:'Tegal', SMT:'Semarang Tawang',
-                KTG:'Ketapang', KYA:'Kroya', KDI:'Kediri', JR:'Jember'
-            };
-            return raw.split('-').map(code => `${stationNames[code] || code} (${code})`).join(' - ');
+            if (!raw || raw === '-') return '-';
+            if (/[()]/.test(raw)) return raw;
+            const stationNames = {KTA:'Kutoarjo',PSE:'Pasarsenen',ML:'Malang',BD:'Bandung',SLO:'Solo Balapan',YK:'Yogyakarta',SGU:'Surabaya Gubeng',PWT:'Purwokerto',GMR:'Gambir',MN:'Madiun',KAC:'Kiaracondong',CP:'Cilacap',PWS:'Purwosari',BL:'Blitar',LPN:'Lempuyangan',CN:'Cirebon',KTG:'Ketapang',JG:'Jombang',SMT:'Semarang Tawang'};
+            if (/^[A-Z]{2,4}-[A-Z]{2,4}$/.test(raw)) {
+                const [a,b] = raw.split('-');
+                return `${stationNames[a] || a} (${a}) - ${stationNames[b] || b} (${b})`;
+            }
+            return raw;
         }
-
         function resolveTrainNumber(raw) {
-            const direct = raw.nomor_ka || raw.trainNumber || raw.no_ka || raw.ka;
-            if (direct) return String(direct);
-            const hulu = raw.nomor_ka_hulu || raw.ka_hulu || '';
-            const hilir = raw.nomor_ka_hilir || raw.ka_hilir || '';
-            if (hulu) return String(hulu);
-            if (hilir) return String(hilir);
-            const name = String(raw.nama_ka || raw.name || '').trim().toUpperCase();
-            const relation = String(raw.relasi || raw.relation || '').trim().toUpperCase();
+            const name = String(raw?.nama_ka || raw?.name || '').trim().toUpperCase();
+            const relation = String(raw?.relasi || raw?.relation || '').trim().toUpperCase();
             if (name === 'BIMA' && relation === 'SLO-GMR') return '7';
             if (name === 'BIMA' && relation === 'GMR-SGU') return '8';
-            return '-';
+            return raw?.nomor_ka || raw?.nomor_ka_hulu || raw?.nomor_ka_hilir || raw?.trainNumber || raw?.no_ka || raw?.ka || raw?.ka_hulu || raw?.ka_hilir || '-';
         }
-
-        function isMissingTime(value) {
-            const v = String(value || '').trim();
-            return !v || v === '-';
-        }
-
-        function isDirect(value) {
-            return String(value || '').trim().toLowerCase() === 'ls';
-        }
-
+        function isDirect(value) { return String(value || '').trim().toLowerCase() === 'ls'; }
         function makeDisplaySchedules(rawSchedules) {
             const result = [];
-
             (Array.isArray(rawSchedules) ? rawSchedules : []).forEach((raw, index) => {
-                // New Firestore import format: one document/record contains DAT + BER.
-                const isImported =
-                    raw &&
-                    (raw.jam_dat !== undefined ||
-                     raw.jam_ber !== undefined ||
-                     raw.nama_ka !== undefined ||
-                     raw.nomor_ka !== undefined);
-
-                if (isImported) {
+                const imported = raw && (raw.jam_dat !== undefined || raw.jam_ber !== undefined || raw.nama_ka !== undefined || raw.nomor_ka !== undefined);
+                if (imported) {
                     const base = {
-                        baseId: raw.id ?? `firestore-${index + 1}`,
+                        baseId: raw.id ?? raw.no ?? `firestore-${index + 1}`,
                         name: raw.nama_ka || raw.name || '-',
-                        trainNumber: resolveTrainNumber(raw),
+                        trainNumber: String(resolveTrainNumber(raw)),
                         relation: formatRelation(raw.relasi || raw.relation || ''),
                         className: formatClass(raw.kelas_ka || raw.kelas || raw.className || ''),
                         jalur: raw.jalur ?? raw.track ?? '-'
                     };
-
                     const dat = String(raw.jam_dat ?? raw.arrival ?? '').trim();
                     const ber = String(raw.jam_ber ?? raw.departure ?? '').trim();
                     const datDirect = isDirect(dat);
                     const berDirect = isDirect(ber);
-
-                    // Semua KA Langsung masuk KEberangkatan. Label Langsung
-                    // ditempatkan di atas jam yang nyata, bukan di atas '-'.
                     if (datDirect) {
-                        if (!isMissingTime(ber) && !berDirect) {
-                            result.push({ id:`${base.baseId}-berangkat-langsung`, type:'berangkat', name:base.name, trainNumber:base.trainNumber, relation:base.relation, className:base.className, jalur:base.jalur, time:ber, direct:true });
-                        }
-                        return;
+                        if (ber && !berDirect) result.push({id:`${base.baseId}-berangkat-langsung`, type:'berangkat', name:base.name, trainNumber:base.trainNumber, relation:base.relation, className:base.className, jalur:base.jalur, time:ber, direct:true});
+                    } else if (dat) {
+                        result.push({id:`${base.baseId}-datang`, type:'datang', name:base.name, trainNumber:base.trainNumber, relation:base.relation, className:base.className, jalur:base.jalur, time:dat, direct:false});
                     }
-
-                    // Kedatangan dengan waktu '-' atau kosong dihapus.
-                    if (!isMissingTime(dat)) {
-                        result.push({ id:`${base.baseId}-datang`, type:'datang', name:base.name, trainNumber:base.trainNumber, relation:base.relation, className:base.className, jalur:base.jalur, time:dat, direct:false });
+                    if (ber && !berDirect && !datDirect) {
+                        result.push({id:`${base.baseId}-berangkat`, type:'berangkat', name:base.name, trainNumber:base.trainNumber, relation:base.relation, className:base.className, jalur:base.jalur, time:ber, direct:false});
+                    } else if (berDirect && !datDirect && dat) {
+                        result.push({id:`${base.baseId}-berangkat-langsung`, type:'berangkat', name:base.name, trainNumber:base.trainNumber, relation:base.relation, className:base.className, jalur:base.jalur, time:dat, direct:true});
                     }
-
-                    // Jika BER = Ls, jadikan keberangkatan langsung dan gunakan
-                    // jam DAT sebagai jam keberangkatan bila tersedia.
-                    if (berDirect) {
-                        if (!isMissingTime(dat)) {
-                            result.push({ id:`${base.baseId}-berangkat-langsung`, type:'berangkat', name:base.name, trainNumber:base.trainNumber, relation:base.relation, className:base.className, jalur:base.jalur, time:dat, direct:true });
-                        }
-                        return;
-                    }
-
-                    if (!isMissingTime(ber)) {
-                        result.push({ id:`${base.baseId}-berangkat`, type:'berangkat', name:base.name, trainNumber:base.trainNumber, relation:base.relation, className:base.className, jalur:base.jalur, time:ber, direct:false });
-                    }
-
                     return;
                 }
-
-                // Backward compatibility for any old display records.
                 if (raw && raw.type && raw.time !== undefined) {
-                    result.push({
-                        id: raw.id ?? `legacy-${index + 1}`,
-                        type: raw.type,
-                        name: raw.name || '-',
-                        trainNumber: raw.trainNumber || '-',
-                        relation: formatRelation(raw.relation || ''),
-                        className: formatClass(raw.className || raw.kelas || ''),
-                        jalur: raw.jalur ?? raw.track ?? '-',
-                        time: raw.time || '',
-                        direct: !!raw.direct || isDirect(raw.status)
-                    });
+                    const direct = !!raw.direct || isDirect(raw.status);
+                    result.push({id:raw.id ?? `legacy-${index+1}`, type:direct ? 'berangkat' : raw.type, name:raw.name || '-', trainNumber:raw.trainNumber || raw.number || raw.kaNumber || '-', relation:formatRelation(raw.relation || ''), className:formatClass(raw.className || raw.kelas || ''), jalur:raw.jalur ?? raw.track ?? '-', time:raw.time || '', direct});
                 }
             });
-
             return result;
         }
 
-        function sortSchedules() {
-            appData.schedules.sort((a, b) => {
-                const aTime = a.time || '99:99';
-                const bTime = b.time || '99:99';
-                return aTime.localeCompare(bTime);
+        // Perbaiki data jadwal lama/cached yang masih kehilangan Nomor Kereta, Kelas, atau Jalur.
+        // Sumber kebenaran metadata adalah tabel RAW 90 KA.
+        function repairScheduleMetadata(list) {
+            if (!Array.isArray(list) || !list.length) return makeDisplay();
+            return list.map((s) => {
+                if (!s) return s;
+                const nameKey = String(s.name || '').trim().toUpperCase();
+                const relationKey = String(s.relation || '').trim();
+                const timeKey = String(s.time || '').trim();
+                const raw = RAW_SCHEDULES.find(r => {
+                    const sameName = String(r.nama_ka || '').trim().toUpperCase() === nameKey;
+                    const sameRelation = formatRelation(r.relasi).trim() === relationKey;
+                    const rawTime = s.type === 'datang' ? String(r.jam_dat || '').trim() : String(r.jam_ber || '').trim();
+                    return sameName && sameRelation && rawTime === timeKey;
+                });
+                if (!raw) return s;
+                return {
+                    ...s,
+                    name: raw.nama_ka || s.name || '-',
+                    trainNumber: String(resolveTrainNumber(raw)),
+                    relation: formatRelation(raw.relasi),
+                    className: formatClass(raw.kelas_ka),
+                    jalur: raw.jalur || s.jalur || '—'
+                };
             });
         }
 
         function loadLocalStorage() {
-            // Keep the existing working fallback so the website never becomes
-            // completely blank if Firebase is temporarily unavailable.
             const storedSchedules = localStorage.getItem('gombong_schedules');
             const storedFacilities = localStorage.getItem('gombong_facilities');
-
             if (storedSchedules) {
                 try {
                     const parsed = JSON.parse(storedSchedules);
                     const converted = makeDisplaySchedules(parsed);
-                    appData.schedules = converted.length > 0 ? converted : [...defaultSchedules];
-                } catch (err) {
+                    appData.schedules = converted.length ? repairScheduleMetadata(converted) : [...defaultSchedules];
+                } catch(err) {
                     appData.schedules = [...defaultSchedules];
                 }
             } else {
                 appData.schedules = [...defaultSchedules];
             }
-
             if (storedFacilities) {
                 try {
-                    appData.facilities = JSON.parse(storedFacilities);
-                } catch (err) {
+                    const parsed = JSON.parse(storedFacilities);
+                    appData.facilities = Array.isArray(parsed) && parsed.length ? parsed : [...defaultFacilities];
+                } catch(err) {
                     appData.facilities = [...defaultFacilities];
                 }
             } else {
                 appData.facilities = [...defaultFacilities];
             }
-
-            sortSchedules();
+            appData.schedules.sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
         }
 
         function setupFirestoreSync() {
-            if (!db) {
-                console.warn('Firestore belum siap.');
-                return;
-            }
-
-            const docRef = doc(
-                db,
-                'artifacts',
-                appId,
-                'public',
-                'data',
-                'station_data',
-                'global'
-            );
-
-            const applyFirestoreData = (docSnap) => {
-                if (!docSnap.exists()) {
-                    console.warn('Dokumen jadwal Firestore tidak ditemukan:', appId);
-                    renderHomeSchedules();
-                    renderJadwal();
-                    return;
-                }
-
+            if (!db || !auth || !auth.currentUser) return;
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'station_data', 'global');
+            const applyData = (docSnap) => {
+                if (!docSnap.exists()) return;
                 const data = docSnap.data() || {};
-                console.log('Firestore jadwal diterima:', data);
-
                 if (Array.isArray(data.schedules)) {
                     const converted = makeDisplaySchedules(data.schedules);
-                    console.log('Jumlah jadwal Firestore:', data.schedules.length, '→ tampilan:', converted.length);
-
-                    if (converted.length > 0) {
-                        appData.schedules = converted;
-                        sortSchedules();
+                    if (converted.length) {
+                        appData.schedules = repairScheduleMetadata(converted);
+                        appData.schedules.sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99'));
                         localStorage.setItem('gombong_schedules', JSON.stringify(converted));
                     }
                 }
-
-                if (Array.isArray(data.facilities)) {
+                if (Array.isArray(data.facilities) && data.facilities.length) {
                     appData.facilities = data.facilities;
                     localStorage.setItem('gombong_facilities', JSON.stringify(appData.facilities));
                 }
-
                 renderHomeSchedules();
                 renderJadwal();
                 renderFasilitas();
                 renderAdminData();
             };
-
-            // Baca sekali segera setelah halaman dibuka, lalu lanjutkan realtime.
-            getDoc(docRef).then(applyFirestoreData).catch(error => {
-                console.error('Firestore getDoc error:', error);
-                // Jangan mengosongkan jadwal; data default/cache tetap ditampilkan.
-                renderHomeSchedules();
-                renderJadwal();
-            });
-
-            onSnapshot(docRef, applyFirestoreData, (error) => {
-                console.error('Firestore onSnapshot error:', error);
-                renderHomeSchedules();
-                renderJadwal();
-            });
+            getDoc(docRef).then(applyData).catch(error => console.warn('Firestore getDoc:', error));
+            onSnapshot(docRef, applyData, error => console.warn('Firestore onSnapshot:', error));
         }
 
         async function saveDataToCloud() {
             if (auth && auth.currentUser && db) {
                 try {
-                    const docRef = doc(
-                        db,
-                        'artifacts',
-                        appId,
-                        'public',
-                        'data',
-                        'station_data',
-                        'global'
-                    );
-
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'station_data', 'global');
                     await setDoc(docRef, {
                         schedules: appData.schedules,
                         facilities: appData.facilities
                     });
                 } catch (e) {
-                    console.error('Cloud save failed, saving local', e);
-                    localStorage.setItem(
-                        'gombong_schedules',
-                        JSON.stringify(appData.schedules)
-                    );
-                    localStorage.setItem(
-                        'gombong_facilities',
-                        JSON.stringify(appData.facilities)
-                    );
+                    console.error("Cloud save failed, saving local", e);
+                    localStorage.setItem('gombong_schedules', JSON.stringify(appData.schedules));
+                    localStorage.setItem('gombong_facilities', JSON.stringify(appData.facilities));
                 }
             } else {
-                localStorage.setItem(
-                    'gombong_schedules',
-                    JSON.stringify(appData.schedules)
-                );
-                localStorage.setItem(
-                    'gombong_facilities',
-                    JSON.stringify(appData.facilities)
-                );
-            }
-        }
-
-        // Admin sekarang menggunakan halaman autentikasi Firebase terpisah.
-        // Website utama tidak lagi memproses username/password admin lama.
-        window.openAdminPortal = function() {
-            window.location.href = "admin-login.html";
-        }
-
-        window.closeAdminPortal = function() {
-            const modal = document.getElementById('login-modal');
-            if (modal) modal.style.display = 'none';
-        }
-
-        window.handleLogin = function(e) {
-            if (e) e.preventDefault();
-            window.location.href = "admin-login.html";
-        }
-
-        window.handleLogout = function() {
-            isAdminLoggedIn = false;
-            switchPage('home');
-            showToast("Berhasil kembali ke website utama.");
-        }
-
-        window.resetData = function() {
-            if (confirm("Apakah Anda yakin ingin mereset semua data ke pengaturan awal?")) {
-                appData.schedules = [...defaultSchedules];
-                appData.facilities = [...defaultFacilities];
-                saveDataToCloud();
-                renderHomeSchedules();
-                renderJadwal();
-                renderFasilitas();
-                renderAdminData();
-                showToast("Data berhasil dikembalikan ke semula!");
-            }
-        }
-
-        function renderHomeSchedules() {
-            const container = document.getElementById('home-schedule-container');
-            if (!container) return;
-
-            container.innerHTML = '';
-
-            if (!appData.schedules || appData.schedules.length === 0) {
-                container.innerHTML =
-                    '<p class="text-sm text-gray-500 italic text-center py-2">Tidak ada jadwal tersimpan.</p>';
-                return;
-            }
-
-            const now = new Date();
-            const currentTotalMinutes =
-                now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
-
-            const departures = appData.schedules.filter(
-                s => s && s.type === 'berangkat' && s.time
-            );
-
-            departures.forEach(s => {
-                const scheduleMinutes = timeToMinutes(s.time);
-                let diff = scheduleMinutes - currentTotalMinutes;
-                if (diff < 0) diff += 1440;
-                s._diff = diff;
-            });
-
-            departures.sort((a, b) => a._diff - b._diff);
-
-            const nearestDepartures = departures.slice(0, 3);
-
-            if (nearestDepartures.length === 0) {
-                container.innerHTML =
-                    '<p class="text-sm text-gray-500 italic text-center py-2">Tidak ada keberangkatan terdekat.</p>';
-                return;
-            }
-
-            nearestDepartures.forEach(schedule => {
-                const totalMinsLeft = Math.floor(schedule._diff);
-                const hoursLeft = Math.floor(totalMinsLeft / 60);
-                const minsLeft = totalMinsLeft % 60;
-
-                let countdownText = '';
-                if (hoursLeft > 0) {
-                    countdownText = `${hoursLeft} jam ${minsLeft} mnt lagi`;
-                } else if (minsLeft > 0) {
-                    countdownText = `${minsLeft} menit lagi`;
-                } else {
-                    countdownText = 'Segera berangkat';
-                }
-
-                const directLabel = schedule.direct
-                    ? '<div class="text-[9px] text-green-600 font-bold tracking-wide">Langsung</div>'
-                    : '';
-
-                container.innerHTML += `
-                    <div class="flex items-center justify-between border-b pb-2.5 last:border-0 last:pb-0 cursor-pointer" onclick="switchPage('jadwal')">
-                        <div class="flex items-center gap-3">
-                            <div class="bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1 text-kai-blue min-w-[60px] text-center shadow-sm">
-                                ${directLabel}
-                                <div class="font-bold text-sm">${escapeHtml(schedule.time)}</div>
-                            </div>
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <p class="font-bold text-sm text-gray-800">${escapeHtml(schedule.name)}</p>
-                                    <span class="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full font-medium">${countdownText}</span>
-                                </div>
-                                <p class="text-xs text-gray-500 truncate max-w-[200px] sm:max-w-[260px]">
-                                    ${escapeHtml(schedule.relation)}
-                                </p>
-                            </div>
-                        </div>
-                        <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
-                    </div>
-                `;
-            });
-        }
-
-        function timeToMinutes(timeStr) {
-            if (!timeStr || !String(timeStr).includes(':')) return 0;
-            const parts = String(timeStr).split(':');
-            return parseInt(parts[0]) * 60 + parseInt(parts[1]);
-        }
-
-        function renderJadwal() {
-            const tbody = document.getElementById('tbody-jadwal');
-            if (!tbody) return;
-
-            tbody.innerHTML = '';
-
-            let filtered = appData.schedules.filter(
-                s => s.type === currentJadwalTab
-            );
-
-            if (searchQuery) {
-                filtered = filtered.filter(s =>
-                    String(s.name || '').toLowerCase().includes(searchQuery) ||
-                    String(s.trainNumber || '').toLowerCase().includes(searchQuery) ||
-                    String(s.relation || '').toLowerCase().includes(searchQuery) ||
-                    String(s.className || '').toLowerCase().includes(searchQuery) ||
-                    String(s.jalur || '').toLowerCase().includes(searchQuery)
-                );
-            }
-
-            if (filtered.length === 0) {
-                tbody.innerHTML =
-                    '<tr><td colspan="6" class="text-center py-6 text-gray-500">Jadwal tidak ditemukan</td></tr>';
-                return;
-            }
-
-            filtered.forEach(s => {
-                const directLabel = s.direct
-                    ? '<div class="text-[9px] text-kai-orange font-bold uppercase tracking-wide mb-0.5">Langsung</div>'
-                    : '';
-
-                const tr = document.createElement('tr');
-
-                tr.innerHTML = `
-                    <td class="align-top font-bold text-gray-800">
-                        ${escapeHtml(s.trainNumber || '-')}
-                    </td>
-                    <td class="align-top">
-                        <div class="font-bold text-gray-800">${escapeHtml(s.name || '-')}</div>
-                    </td>
-                    <td class="align-top text-center">
-                        <div class="text-gray-600 text-xs sm:text-sm leading-relaxed">
-                            ${escapeHtml(s.relation || '-')}
-                        </div>
-                    </td>
-                    <td class="align-top text-xs text-center">
-                        ${escapeHtml(s.className || '-')}
-                    </td>
-                    <td class="align-top text-xs text-center">
-                        ${escapeHtml(s.jalur || '-')}
-                    </td>
-                    <td class="align-top text-center">
-                        ${directLabel}
-                        <div class="font-bold text-kai-blue">${escapeHtml(s.time || '-')}</div>
-                    </td>
-                `;
-
-                tbody.appendChild(tr);
-            });
-        }
-
-        function renderFasilitas() {
-            const container = document.getElementById('fasilitas-container');
-            if (!container) return;
-
-            container.innerHTML = '';
-
-            appData.facilities.forEach(f => {
-                container.innerHTML += `
-                    <div class="card flex flex-col items-center justify-center text-center !p-4 !mb-0 h-full">
-                        <div class="w-12 h-12 bg-gray-50 text-kai-orange rounded-full flex items-center justify-center text-xl mb-2">
-                            <i class="${escapeHtml(f.icon)}"></i>
-                        </div>
-                        <span class="text-xs font-semibold text-gray-700">${escapeHtml(f.name)}</span>
-                    </div>
-                `;
-            });
-        }
-
-        function renderAdminData() {
-            const tbodyJadwal = document.getElementById('admin-tbody-jadwal');
-            if (!tbodyJadwal) return;
-
-            tbodyJadwal.innerHTML = '';
-
-            appData.schedules.forEach(s => {
-                const direct = s.direct
-                    ? '<div class="text-[9px] text-green-600 font-bold">Langsung</div>'
-                    : '';
-
-                tbodyJadwal.innerHTML += `
-                    <tr>
-                        <td class="text-xs">
-                            <span class="${s.type === 'berangkat' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'} px-1 rounded text-[10px] mr-1 uppercase">
-                                ${s.type === 'berangkat' ? 'B' : 'D'}
-                            </span>
-                            ${escapeHtml(s.name)}
-                            <div class="text-[10px] text-gray-500">
-                                KA ${escapeHtml(s.trainNumber || '-')}
-                            </div>
-                        </td>
-                        <td class="text-xs truncate max-w-[120px]">${escapeHtml(s.relation)}</td>
-                        <td class="text-xs">
-                            ${escapeHtml(s.className || '-')}<br>
-                            Jalur ${escapeHtml(s.jalur || '-')}
-                        </td>
-                        <td class="text-xs font-mono">${direct}${escapeHtml(s.time || '-')}</td>
-                        <td class="text-right">
-                            <button onclick="deleteSchedule('${String(s.id).replace(/'/g, "\\'")}')" class="text-red-500 hover:bg-red-50 p-1 rounded">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-
-            const listFasilitas = document.getElementById('admin-list-fasilitas');
-            if (!listFasilitas) return;
-
-            listFasilitas.innerHTML = '';
-
-            appData.facilities.forEach(f => {
-                listFasilitas.innerHTML += `
-                    <div class="flex items-center justify-between p-2 bg-white border rounded shadow-sm">
-                        <div class="flex items-center gap-3">
-                            <i class="${escapeHtml(f.icon)} text-kai-blue w-6 text-center"></i>
-                            <span class="text-sm font-medium">${escapeHtml(f.name)}</span>
-                        </div>
-                        <button onclick="deleteFacility(${Number(f.id)})" class="text-red-500 hover:bg-red-50 p-1 rounded">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                `;
-            });
-        }
-
-        function handleAddJadwal(e) {
-            e.preventDefault();
-
-            const name = document.getElementById('add-ka-nama').value;
-            const type = document.getElementById('add-ka-jenis').value;
-            const relation = document.getElementById('add-ka-relasi').value;
-            const time = document.getElementById('add-ka-jam').value;
-
-            const numericIds = appData.schedules
-                .map(s => Number(s.id))
-                .filter(Number.isFinite);
-
-            const newId = numericIds.length
-                ? Math.max(...numericIds) + 1
-                : Date.now();
-
-            appData.schedules.push({
-                id: newId,
-                type,
-                name,
-                trainNumber: '-',
-                relation: formatRelation(relation),
-                className: '-',
-                jalur: '-',
-                time,
-                direct: false
-            });
-
-            sortSchedules();
-            saveDataToCloud();
-
-            document.getElementById('form-add-jadwal').reset();
-            renderAdminData();
-            renderJadwal();
-            renderHomeSchedules();
-            showToast("Jadwal berhasil ditambahkan & disinkronkan!");
-        }
-
-        function handleAddFasilitas(e) {
-            e.preventDefault();
-
-            const name = document.getElementById('add-fas-nama').value;
-            const icon = document.getElementById('add-fas-icon').value;
-
-            const newId = appData.facilities.length > 0
-                ? Math.max(...appData.facilities.map(f => f.id)) + 1
-                : 1;
-
-            appData.facilities.push({ id: newId, name, icon });
-
-            saveDataToCloud();
-            document.getElementById('form-add-fasilitas').reset();
-            renderAdminData();
-            renderFasilitas();
-            showToast("Fasilitas berhasil ditambahkan & disinkronkan!");
-        }
-
-        window.deleteSchedule = function(id) {
-            if (confirm("Hapus jadwal ini?")) {
-                appData.schedules = appData.schedules.filter(
-                    s => String(s.id) !== String(id)
-                );
-
-                saveDataToCloud();
-                renderAdminData();
-                renderJadwal();
-                renderHomeSchedules();
-                showToast("Jadwal berhasil dihapus.");
-            }
-        }
-
-        window.deleteFacility = function(id) {
-            if (confirm("Hapus fasilitas ini?")) {
-                appData.facilities = appData.facilities.filter(f => f.id !== id);
-                saveDataToCloud();
-                renderAdminData();
-                renderFasilitas();
-                showToast("Fasilitas berhasil dihapus.");
+                localStorage.setItem('gombong_schedules', JSON.stringify(appData.schedules));
+                localStorage.setItem('gombong_facilities', JSON.stringify(appData.facilities));
             }
         }
 
@@ -1839,29 +2436,41 @@
             return parseInt(parts[0]) * 60 + parseInt(parts[1]);
         }
 
-        function renderJadwalLegacy() {
+        function renderJadwal() {
             const tbody = document.getElementById('tbody-jadwal');
+            if (!tbody) return;
             tbody.innerHTML = '';
-            
-            let filtered = appData.schedules.filter(s => s.type === currentJadwalTab);
+
+            let filtered = (appData.schedules || []).filter(s => s && s.type === currentJadwalTab && !(currentJadwalTab === 'datang' && s.direct));
             if (searchQuery) {
-                filtered = filtered.filter(s => 
-                    s.name.toLowerCase().includes(searchQuery) || 
-                    s.relation.toLowerCase().includes(searchQuery)
-                );
+                filtered = filtered.filter(s => {
+                    const text = [s.name, s.relation, s.trainNumber, s.number, s.kaNumber, s.class, s.className, s.kelas, s.trainClass, s.track, s.jalur]
+                        .filter(Boolean).join(' ').toLowerCase();
+                    return text.includes(searchQuery);
+                });
             }
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-gray-500">Jadwal tidak ditemukan</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-500">Jadwal tidak ditemukan</td></tr>`;
                 return;
             }
 
+            const safe = value => String(value ?? '—')
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+
             filtered.forEach(s => {
                 const tr = document.createElement('tr');
+                const number = s.trainNumber ?? s.number ?? s.kaNumber ?? s.noKa ?? '—';
+                const kelas = s.className ?? s.class ?? s.kelas ?? s.trainClass ?? '—';
+                const jalur = s.track ?? s.jalur ?? s.platform ?? '—';
                 tr.innerHTML = `
-                    <td class="font-medium text-gray-800">${s.name}</td>
-                    <td class="text-gray-600 text-xs sm:text-sm">${s.relation}</td>
-                    <td class="text-right font-bold text-kai-blue">${s.time}</td>
+                    <td class="font-bold text-gray-800 whitespace-nowrap">${safe(number)}</td>
+                    <td class="font-medium text-gray-800">${safe(s.name)}</td>
+                    <td class="text-gray-600 text-xs sm:text-sm min-w-[220px]">${safe(s.relation)}</td>
+                    <td class="text-gray-600 text-xs whitespace-nowrap">${safe(kelas)}</td>
+                    <td class="text-gray-600 text-xs text-center">${safe(jalur)}</td>
+                    <td class="text-center font-bold text-kai-blue whitespace-nowrap">${s.direct ? '<div class="text-[9px] text-kai-orange font-bold uppercase tracking-wide mb-0.5">Langsung</div>' : ''}${s.direct ? '' : safe(s.time)}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -1989,6 +2598,8 @@
             if (navEl) navEl.classList.add('active');
             
             window.scrollTo(0, 0);
+            const tableWrap = document.querySelector('#page-jadwal .overflow-x-auto');
+            if (tableWrap) tableWrap.scrollLeft = 0;
         }
 
         window.switchTab = function(type) {
@@ -2042,81 +2653,10 @@
         window.onload = initApp;
     </script>
 
-<!-- Fallback UI handlers: keep navigation/buttons working even if the Firebase module is delayed or blocked. -->
-<script>
-(function () {
-  function activatePage(pageId) {
-    document.querySelectorAll('.page-content').forEach(function (el) { el.classList.remove('active'); });
-    var page = document.getElementById('page-' + pageId);
-    if (page) page.classList.add('active');
-
-    document.querySelectorAll('.nav-item').forEach(function (el) { el.classList.remove('active'); });
-    var nav = document.getElementById('nav-' + pageId);
-    if (nav) nav.classList.add('active');
-    window.scrollTo(0, 0);
-  }
-
-  if (typeof window.switchPage !== 'function') {
-    window.switchPage = function (pageId) {
-      if (pageId === 'admin') { window.location.href = 'admin-login.html'; return; }
-      activatePage(pageId);
-    };
-  }
-
-  if (typeof window.switchTab !== 'function') {
-    window.switchTab = function (type) {
-      var b = document.getElementById('btn-tab-berangkat');
-      var d = document.getElementById('btn-tab-datang');
-      if (!b || !d) return;
-      var active = 'flex-1 py-2 text-sm font-medium rounded-md bg-white text-kai-blue shadow-sm';
-      var inactive = 'flex-1 py-2 text-sm font-medium rounded-md text-gray-600';
-      if (type === 'datang') { d.className = active; b.className = inactive; }
-      else { b.className = active; d.className = inactive; }
-    };
-  }
-
-  if (typeof window.promptInstallApp !== 'function') {
-    window.promptInstallApp = function () {
-      if (window.deferredPrompt) {
-        window.deferredPrompt.prompt();
-      } else {
-        alert("Untuk menginstall aplikasi, buka menu browser lalu pilih 'Tambahkan ke Layar Utama'.");
-      }
-    };
-  }
-
-  if (typeof window.downloadMock !== 'function') {
-    window.downloadMock = function (filename) {
-      var toast = document.getElementById('toast');
-      if (toast) {
-        toast.textContent = 'Mengunduh dokumen: ' + filename + '...';
-        toast.className = 'show';
-        setTimeout(function () { toast.className = ''; }, 2000);
-      }
-    };
-  }
-
-  if (typeof window.copyToClipboard !== 'function') {
-    window.copyToClipboard = function (text) {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(function () {
-          var toast = document.getElementById('toast');
-          if (toast) { toast.textContent = 'Disalin ke papan klip!'; toast.className = 'show'; setTimeout(function(){ toast.className=''; }, 2000); }
-        }).catch(function(){ alert(text); });
-      } else { alert(text); }
-    };
-  }
-
-  if (typeof window.handleLogin !== 'function') {
-    window.handleLogin = function (e) { if (e) e.preventDefault(); window.location.href = 'admin-login.html'; };
-  }
-})();
-</script>
-
-<div id="update-badge">Update v18<small>Stasiun Gombong Web App</small></div>
+<div id="update-badge">Update v15<small>Stasiun Gombong Web App</small></div>
 <script>
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js?v=18').catch(()=>{}));
+  window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
 }
 </script>
 </body>
